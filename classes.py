@@ -6,52 +6,63 @@ Created on Fri Sep  7 10:51:21 2018
 @author: hertta
 """
 
+import xxx, xxx, xxx
+
+
 class SchoolDistr: 
-
-    def __init__(self, blocks, studentlimit, ttmatrix):
-
+    """ todo: selitä attribuutit ja luokan tarkoitus, ehkä metodit
+    
+    
+    """
+    
+    def __init__(self, blocks, studentlimit: int, ttmatrix):
+        
         # tietää omat ruutunsa, muutetaan heti dict-muotoon makeDict -metodilla
-        self.blocks = makeDict(blocks)
+        self.blocks = make_dict(blocks)
 
         # tietää oman matka-aikamatriisinsa, muutetaan heti dict-muotoon makeDict -metodilla
-        self.ttmatrix = makeDict(ttmatrix)        
+        self.ttmatrix = make_dict(ttmatrix)        
         
         # tietää oman polygoninsa, joka lasketaan metodin avulla (voiko sen tehdä tässä initin sisällä?)
-        self.geometry = self.calculateGeometry() ### VOIKO TEHDÄ NÄIN?
+        self.geometry = self.calculate_geometry() ### VOIKO TEHDÄ NÄIN?
         
         # tietää oman maksimimatka-aikansa (nyk. maksimikävelyaika * 1.5 ??)
-        self.maxttime = self.calculateMaxttime() ### VOIKO TEHDÄ NÄIN?
+        self.maxttime = self.calculate_maxttime() ### VOIKO TEHDÄ NÄIN?
         
         # tietää oman maksimioppilasmääränsä (tätä ehtoa täytyy hieman löysätä, katsotaan kuinka paljon, nyt kertoimella 1.25)
         self.studentlimit = studentlimit * 1.25
         
         # tietää oman tämän hetken z-arvonsa
-        self.zvalue = self.calculateZvalue()
+        self.zvalue = self.calculate_zvalue()
 
 
 
 # Metodit
 
     # laske geometria
-    def calculateGeometry(self):
+    def calculate_geometry(self):
         
         # yhdistää ruudut yhdeksi polygoniksi ja tallentaa ne muuttujaan self.geometry
         
     # laske maksimimatka-aika
-    def calculateMaxttime(self):
+    def calculate_maxttime(self):
         
         # laskee oman matka-aika-maksimiarvonsa, joka toimii myöhemmin hylkäysperiaatteena. 
         # esim. nyk. maksimikävelyaika * 1.5 ??
         # tehdään vain kerran, kun instanssi luodaan
         
     # laske z-arvo 
-    def calculateZvalue(self):
-        
+    def calculate_zvalue(self, block):
+        if block, self.zvalue = None:
+            xxxx
+        else:
+            self.zvalue += block.zvalue
+             
         # lasketaan yhteen blocks-dictin z-valuet.
         # Tehdään vain kerran alussa
     
     # lisätään z-valueen uusi luku kun otetaan uusi ruutu tai vähennetään z-valuesta luku kun otetaan ruutu pois    
-    def updateZvalue(self, x):
+    def update_zvalue(self, x):
         
         # tätä tarkoitus kutsua sisäisesti selectBestBlock -metodissa.
         # tällä lisätään tai vähennetään blockin z-arvosta luku, riippuen x:n etumerkistä
