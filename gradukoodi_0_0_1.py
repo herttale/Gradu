@@ -43,7 +43,7 @@ def createFishnet(total_bounds, crs, height):
     return grid
 
 
-########################## MAIN ####################################
+########################## ALKUVALMISTELUT ####################################
     
 
 # 1. ladataan aineistot: rttk poiminta ja oppilasalueet
@@ -66,7 +66,7 @@ alueet_proj.plot(facecolor='gray')
 ruudut_hki = ruudut.loc[ruudut['KUNTA'] == "091"]
 ruudut_hki.plot(facecolor='gray')
 
-# toinen vaihtoehto helsingin alueen poimimiseksi
+# toinen vaihtoehto helsingin alueen poimimiseksi TÄMÄ TÄYTYY TEHDÄ FUNKTIOKSI
 data = []
 for index2, ruutu in ruudut.iterrows():
     for index, alue in alueet_proj.iterrows():
@@ -89,7 +89,7 @@ ruudut_hki.crs = alueet_proj.crs
 # poimitaan helsingin kokoisesta rttk:sta bounding box -arvot
 fishnet = createFishnet(total_bounds = ruudut_hki.total_bounds, crs = ruudut_hki.crs, height = 250)
 
-# poimitaan fishnetistä helsingin muotoinen alue oppilasaluepolygonien perusteella
+# poimitaan fishnetistä helsingin muotoinen alue oppilasaluepolygonien perusteella TEE TÄSTÄ FUNKTIO
 
 data = []
 
@@ -119,12 +119,18 @@ fn_ruudut_joined = fn_ruudut_joined.drop("index_right", axis = 1)
 
 # 3. joinataan rttk-ruutuihin tieto, mihin oppilasalueeseen kuuluvat (alueID)
 
-ruudut_joined = gpd.sjoin(fn_ruudut_joined, alueet_proj, how = 'inner', op = "intersects")
-ruudut_joined.plot(facecolor='gray')
+ruudut_joined = gpd.sjoin(fn_ruudut_joined, alueet_proj, how = 'left', op = "within")
 
+# tarkastetaan plottaamalla että kaikki ok
+ruudut_joined.plot(column = 'ki_muu', linewidth=0.5, cmap =  'plasma_r')
+
+## KAIKKI OK!
 
 # 5. lasketaan kaikille ruuduille oma pos.diskriminaation indeksinsä. Jaetaan se kaikkien ruutujen keskihajonnalla 
-# jotta saadaan z-arvo. Lasketaan kaikille ruuduille kaikkiin kouluihin myös matkustusaika
+# jotta saadaan z-arvo. Lasketaan kaikille ruuduille kaikkiin kouluihin myös matkustusaika?
+# Matkustusajan laskemisen vaihtoehdot:
+# - geokoodataan kaikki ala-asteen koulut osoitteiden perusteella, haetaan matka-aikamatriisit kaikkiin kouluihin 
+#
 
 # muutetaan salatut ruudut luvuksi, joka vastaa keskimääräistä indeksiarvoa (tässä muunkielisten osuutta koko helsingissä)
 avg_muunkielisten_osuus = sum(ruudut_joined.loc[ruudut_joined["ki_muu"] > -1,"ki_muu"])/sum(ruudut_joined.loc[ruudut_joined["ki_vakiy"] > -1,"ki_vakiy"])
@@ -167,6 +173,8 @@ koulut_final["abs_z_value"] = abs(koulut_final["z-value"])
 piirien maksimietäisyydet alkup.alueiden keskipisteistä * 2 ? sopisiko rajoitteeksi?
 uuden ruudun etäisyys siis oltava maks 2 * edellä mainittu. Tämä testataan funktiossa ensin, koska diskauskriteeri
 
+
+###################### ALKUVALMISTELUT PÄÄTTYY ##############################
 
 # 6. aletaan iteroida alueita yksi kerrallaan käymällä läpi oppilasaluepolygonitaulukkoa 
 
