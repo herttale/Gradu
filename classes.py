@@ -10,10 +10,10 @@ class SchoolDistr:
 
     def __init__(self, blocks, studentlimit, ttmatrix):
 
-        # tietää omat ruutunsa
-        self.blocks = blocks
+        # tietää omat ruutunsa, muutetaan heti dict-muotoon makeDict -metodilla
+        self.blocks = makeDict(blocks)
 
-        # tietää oman matka-aikamatriisinsa, initissä se muutetaan dict-muotoon makeDict -metodilla
+        # tietää oman matka-aikamatriisinsa, muutetaan heti dict-muotoon makeDict -metodilla
         self.ttmatrix = makeDict(ttmatrix)        
         
         # tietää oman polygoninsa, joka lasketaan metodin avulla (voiko sen tehdä tässä initin sisällä?)
@@ -35,27 +35,54 @@ class SchoolDistr:
     # laske geometria
     def calculateGeometry(self):
         
+        # yhdistää ruudut yhdeksi polygoniksi ja tallentaa ne muuttujaan self.geometry
+        
     # laske maksimimatka-aika
     def calculateMaxttime(self):
-        # nyk. maksimikävelyaika * 1.5 ??
+        
+        # laskee oman matka-aika-maksimiarvonsa, joka toimii myöhemmin hylkäysperiaatteena. 
+        # esim. nyk. maksimikävelyaika * 1.5 ??
+        # tehdään vain kerran, kun instanssi luodaan
+        
     # laske z-arvo 
     def calculateZvalue(self):
         
-    # tee matriisista dicti
-    def __makeDict(ttmatrix):
+        # lasketaan yhteen blocks-dictin z-valuet.
+        # Tehdään vain kerran alussa
+    
+    # lisätään z-valueen uusi luku kun otetaan uusi ruutu tai vähennetään z-valuesta luku kun otetaan ruutu pois    
+    def updateZvalue(self, x):
+        
+        # tätä tarkoitus kutsua sisäisesti selectBestBlock -metodissa.
+        # tällä lisätään tai vähennetään blockin z-arvosta luku, riippuen x:n etumerkistä
+        
+    # tee dataframesta dicti
+    def makeDict(dataframe):
+        
+        # tehdään dataframesta dicti. Indeksistä tehdään avain.
         
     # mitä ruutuja instanssi sivuaa (koskee)
     def touchesWhich(self, grid)
     
+        # tämä metodi palauttaa ne ruudut, joita self koskee (sivuaa)
+        # tämä tehdään joka iteraation joka vuorolla
+    
     # hylkäysperiaatteen testaaminen: onko liian kaukana
-    def isTooFar(self, block)
+    def isTooFar(self, block):
+        
+        # etsii omasta matka-aikamatriisistaan
 
     # lisää ruutu blocks -dictiin 
     def addBlock(self, block):
+        
+        # lisää ruudun blocks -dictiin
         # tässä täytyy käsitellä myös "tyhjän" lisääminen ok vaihtoehtona, jolloin ei vaan tapahdu mitään
 
     # poista ruutu blocks -dictistä 
-    def removeBlock(self, block)
+    def removeBlock(self, block):
+        
+        # poistaa ruudun blocks -dictistä
+        # tässä täytyy käsitellä myös "tyhjän" poistaminen ok vaihtoehtona, jolloin ei vaan tapahdu mitään
 
     # valitse ruutu syötteen setistä
     def selectBestBlock(self, blockset):
