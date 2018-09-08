@@ -215,8 +215,31 @@ uuden ruudun etäisyys siis oltava maks 2 * edellä mainittu. Tämä testataan f
 
 # tämän jälkeen         
         
+############################ TESTAUSTA YMS. ############################
+
+# Changing matplotlib backend
+ 
+import matplotlib
+gui_env = ['TKAgg','GTKAgg','Qt4Agg','WXAgg']
+for gui in gui_env:
+    try:
+        print ("testing", gui)
+        matplotlib.use(gui,warn=False, force=True)
+        from matplotlib import pyplot as plt
+        break
+    except:
+        continue
+print( "Using:",matplotlib.get_backend())
         
         
+x, y = geomtest.exterior.coords.xy
+fig = plt.figure(1, figsize=(5,5), dpi=90)
+ax = fig.add_subplot(111)
+ax.plot(x, y, color='#6699cc', alpha=0.7,
+    linewidth=3, solid_capstyle='round', zorder=2)
+plt.show()
+
+
 
 
     

@@ -5,7 +5,7 @@ Created on Fri Sep  7 10:51:21 2018
 
 @author: hertta
 """
-
+from shapely.ops import cascaded_union
 import xxx, xxx, xxx
 
 
@@ -17,17 +17,17 @@ class SchoolDistr:
     
     def __init__(self, blocks, studentlimit: int, ttmatrix):
         
-        # tietää omat ruutunsa, muutetaan heti dict-muotoon makeDict -metodilla
+        # tietää omat ruutunsa, muutetaan heti dict-muotoon makeDict -metodilla. Avaimen täytyy olla sama kuin ttmatrixissa
         self.blocks = make_dict(blocks)
 
-        # tietää oman matka-aikamatriisinsa, muutetaan heti dict-muotoon makeDict -metodilla
+        # tietää oman matka-aikamatriisinsa, muutetaan heti dict-muotoon makeDict -metodilla. Avaimen täytyy olla sama kuin blocksissa
         self.ttmatrix = make_dict(ttmatrix)        
         
-        # tietää oman polygoninsa, joka lasketaan metodin avulla (voiko sen tehdä tässä initin sisällä?)
-        self.geometry = self.calculate_geometry() ### VOIKO TEHDÄ NÄIN?
+        # tietää oman polygoninsa, joka lasketaan metodin avulla 
+        self.geometry = self.calculate_geometry()
         
         # tietää oman maksimimatka-aikansa (nyk. maksimikävelyaika * 1.5 ??)
-        self.maxttime = self.calculate_maxttime() ### VOIKO TEHDÄ NÄIN?
+        self.maxttime = self.calculate_maxttime()
         
         # tietää oman maksimioppilasmääränsä (tätä ehtoa täytyy hieman löysätä, katsotaan kuinka paljon, nyt kertoimella 1.25)
         self.studentlimit = studentlimit * 1.25
@@ -43,6 +43,11 @@ class SchoolDistr:
     def calculate_geometry(self):
         
         # yhdistää ruudut yhdeksi polygoniksi ja tallentaa ne muuttujaan self.geometry
+        blockFrame = pd.DataFrame.from_dict(data= self.blocks, orient='index')
+        geomList = blockFrame['geometry'].tolist()
+        self.geometry = cascaded_union(geomList)
+        ## testattu, toimii
+        
         
     # laske maksimimatka-aika
     def calculate_maxttime(self):
