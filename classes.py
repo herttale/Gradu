@@ -55,6 +55,7 @@ class SchoolDistr:
         # laskee oman matka-aika-maksimiarvonsa, joka toimii myöhemmin hylkäysperiaatteena. 
         # esim. nyk. maksimikävelyaika * 1.5 ??
         # tehdään vain kerran, kun instanssi luodaan
+        # 
         
     # laske z-arvo 
     def calculate_zvalue(self, block):
@@ -73,35 +74,35 @@ class SchoolDistr:
         # tällä lisätään tai vähennetään blockin z-arvosta luku, riippuen x:n etumerkistä
         
     # tee dataframesta dicti
-    def makeDict(dataframe):
+    def make_dict(dataframe):
         
         # tehdään dataframesta dicti. Indeksistä tehdään avain.
         
     # mitä ruutuja instanssi sivuaa (koskee)
-    def touchesWhich(self, grid)
+    def touches_which(self, grid)
     
         # tämä metodi palauttaa ne ruudut, joita self koskee (sivuaa)
         # tämä tehdään joka iteraation joka vuorolla
     
     # hylkäysperiaatteen testaaminen: onko liian kaukana
-    def isTooFar(self, block):
+    def is_too_far(self, block):
         
         # etsii omasta matka-aikamatriisistaan
 
     # lisää ruutu blocks -dictiin 
-    def addBlock(self, block):
+    def add_block(self, block):
         
         # lisää ruudun blocks -dictiin
         # tässä täytyy käsitellä myös "tyhjän" lisääminen ok vaihtoehtona, jolloin ei vaan tapahdu mitään
 
     # poista ruutu blocks -dictistä 
-    def removeBlock(self, block):
+    def remove_block(self, block):
         
         # poistaa ruudun blocks -dictistä
         # tässä täytyy käsitellä myös "tyhjän" poistaminen ok vaihtoehtona, jolloin ei vaan tapahdu mitään
 
     # valitse ruutu syötteen setistä
-    def selectBestBlock(self, blockset):
+    def select_best_block(self, blockset):
         
         # tässä käydään looppina setissä olevia blockeja. Jokaisen kohdalla tsekataan ensin hylkäysperiaatteet.
         # Mikäli hylkäysperiaatteet ok, tsekataan, onko blockin ja selfin z-valueiden summa itseisarvoltaan 

@@ -239,7 +239,7 @@ ax.plot(x, y, color='#6699cc', alpha=0.7,
     linewidth=3, solid_capstyle='round', zorder=2)
 plt.show()
 
-
+op_alueet2018 = gpd.read_file("/home/hertta/Documents/Gradu/Hki_ooa_alaaste_suomi.shp")
 
 
     
