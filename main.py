@@ -9,6 +9,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from geopandas.tools import geocode
 
 ##### Funktiot #####
 
@@ -41,6 +42,7 @@ def createFishnet(total_bounds, crs, height):
     grid = gpd.GeoDataFrame({'geometry':polygons})
     grid.crs = crs
     return grid
+
 
 
 ########################## ALKUVALMISTELUT ####################################
@@ -239,10 +241,12 @@ ax.plot(x, y, color='#6699cc', alpha=0.7,
     linewidth=3, solid_capstyle='round', zorder=2)
 plt.show()
 
-op_alueet2018 = gpd.read_file("/home/hertta/Documents/Gradu/Hki_ooa_alaaste_suomi.shp")
+op_alueet2018 = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/Hki_ooa_alaaste_suomi.shp")
 
+op_alueet2018.plot(facecolor='gray')
+    
+hiidenkivi1 = op_alueet2018.loc[(op_alueet2018["id"] == 114329) | (op_alueet2018["id"] == 114404) ,:]  
 
-    
-    
-    
-    
+koulut_osoitteet = pd.read_csv("/home/hertta/Documents/Gradu/oppilasalueet2018/koulut_osoitteet.csv", sep = ",", encoding = "UTF-8")
+
+  

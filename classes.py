@@ -11,6 +11,7 @@ import xxx, xxx, xxx
 
 class SchoolDistr: 
     """ todo: selitä attribuutit ja luokan tarkoitus, ehkä metodit
+    blocks & ttmatrix täytyy olla dictejä
     
     
     """
@@ -18,10 +19,10 @@ class SchoolDistr:
     def __init__(self, blocks, studentlimit: int, ttmatrix):
         
         # tietää omat ruutunsa, muutetaan heti dict-muotoon makeDict -metodilla. Avaimen täytyy olla sama kuin ttmatrixissa
-        self.blocks = make_dict(blocks)
+        self.blocks = blocks
 
         # tietää oman matka-aikamatriisinsa, muutetaan heti dict-muotoon makeDict -metodilla. Avaimen täytyy olla sama kuin blocksissa
-        self.ttmatrix = make_dict(ttmatrix)        
+        self.ttmatrix = ttmatrix        
         
         # tietää oman polygoninsa, joka lasketaan metodin avulla 
         self.geometry = self.calculate_geometry()
@@ -46,7 +47,7 @@ class SchoolDistr:
         blockFrame = pd.DataFrame.from_dict(data= self.blocks, orient='index')
         geomList = blockFrame['geometry'].tolist()
         self.geometry = cascaded_union(geomList)
-        ## testattu, toimii
+        ## testattu, toimii itsenäisesti
         
         
     # laske maksimimatka-aika
@@ -58,26 +59,25 @@ class SchoolDistr:
         # 
         
     # laske z-arvo 
-    def calculate_zvalue(self, block):
-        if block, self.zvalue = None:
-            xxxx
-        else:
+    def calculate_zvalue(self, block, remove = False):
+        
+        if block, self.zvalue == None: # jos operaatio tehdään ensimmäistä kertaa
+            Zsum = 0
+            for key, value in self.blocks.items():
+                Zsum += value.Zvalue
+            self.zvalue = Zsum
+        
+        elif remove = True:
+            self.zvalue -= block.zvalue
+            
+        else: # kun myöhemmin lisätään tai poistetaan ruutuja
             self.zvalue += block.zvalue
              
         # lasketaan yhteen blocks-dictin z-valuet.
         # Tehdään vain kerran alussa
+        # lisätään z-valueen uusi luku kun otetaan uusi ruutu tai vähennetään z-valuesta luku kun otetaan ruutu pois
     
-    # lisätään z-valueen uusi luku kun otetaan uusi ruutu tai vähennetään z-valuesta luku kun otetaan ruutu pois    
-    def update_zvalue(self, x):
-        
-        # tätä tarkoitus kutsua sisäisesti selectBestBlock -metodissa.
-        # tällä lisätään tai vähennetään blockin z-arvosta luku, riippuen x:n etumerkistä
-        
-    # tee dataframesta dicti
-    def make_dict(dataframe):
-        
-        # tehdään dataframesta dicti. Indeksistä tehdään avain.
-        
+              
     # mitä ruutuja instanssi sivuaa (koskee)
     def touches_which(self, grid)
     
@@ -87,19 +87,33 @@ class SchoolDistr:
     # hylkäysperiaatteen testaaminen: onko liian kaukana
     def is_too_far(self, block):
         
-        # etsii omasta matka-aikamatriisistaan
+        # etsii omasta matka-aikamatriisistaan, onko kyseisen ruudun matka-aika suurempi kuin self.maxttime
 
     # lisää ruutu blocks -dictiin 
     def add_block(self, block):
         
         # lisää ruudun blocks -dictiin
+        # päivittää geometrian ja z-valuen
         # tässä täytyy käsitellä myös "tyhjän" lisääminen ok vaihtoehtona, jolloin ei vaan tapahdu mitään
-
+        if block == None:
+            return
+        else:
+            self.blocks[block.rttkId] = block
+            self.zvalue = self.calculate_zvalue(block)
+            self.geometry = self.calculate_geometry()
+        
     # poista ruutu blocks -dictistä 
     def remove_block(self, block):
         
         # poistaa ruudun blocks -dictistä
+        # päivittää geometrian ja z-valuen
         # tässä täytyy käsitellä myös "tyhjän" poistaminen ok vaihtoehtona, jolloin ei vaan tapahdu mitään
+        if block == None:
+            return
+        else:
+            del self.blocks[block.rttkId]
+            self.zvalue = self.calculate_zvalue(block, remove = True)
+            self.geometry = self.calculate_geometry()
 
     # valitse ruutu syötteen setistä
     def select_best_block(self, blockset):
@@ -114,9 +128,12 @@ class SchoolDistr:
 
 class Block:
     
-    def __init__(self, Zvalue, studentBase, schoolDistr):
+    def __init__(self, rttkId, Zvalue, studentBase, schoolDistr):
 
-        # tietää omat ruutunsa
+        # tietää oman id:nsä
+        self.rttkId = rttkId
+        
+        # tietää oman z-arvonsa
         self.Zvalue = Zvalue
         
         # tietää oman ala-asteikäisten lasten määränsä
