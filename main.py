@@ -59,7 +59,7 @@ alueet.crs
 alueet.plot(facecolor='gray')
 
 
-# 2. laitetaan samaan koordinaattijärjestelmään, tehdään muut alkuvalmistelut
+# 2. laitetaan samaan koordinaattijärjestelmään
 alueet_proj = alueet.to_crs(ruudut.crs)
 alueet_proj.crs
 alueet_proj.plot(facecolor='gray')
@@ -68,23 +68,15 @@ alueet_proj.plot(facecolor='gray')
 ruudut_hki = ruudut.loc[ruudut['KUNTA'] == "091"]
 ruudut_hki.plot(facecolor='gray')
 
-# toinen vaihtoehto helsingin alueen poimimiseksi TÄMÄ TÄYTYY TEHDÄ FUNKTIOKSI
-data = []
-for index2, ruutu in ruudut.iterrows():
-    for index, alue in alueet_proj.iterrows():
-       if ruutu['geometry'].intersects(alue['geometry']):
-          data.append({'KUNTA': ruutu['KUNTA'], 'euref_x':ruutu['euref_x'], 'euref_y':ruutu['euref_y'],'ki_vakiy': ruutu['ki_vakiy'], 'ki_fi':ruutu['ki_fi'], 'ki_sv':ruutu['ki_sv'], 'ki_muu':ruutu['ki_muu'], 'geometry': ruutu['geometry']})
-          break
-      
+# ropataan turhat columnit
 ruudut_hki = gpd.GeoDataFrame(data,columns=['KUNTA', 'euref_x', 'euref_y', 'ki_vakiy', 'ki_fi',
        'ki_sv', 'ki_muu', 'geometry'])
 
-    
+# määritetään koordinaattijärjestelmä    
 ruudut_hki.crs = alueet_proj.crs
 
-### Uusi vaihe: luodaan rttk:n kanssa yksiin menevä fishnet, poimitaan siitä oppilasalueiden ulkorajojen kokoinen otos, luodaan  
+### Luodaan rttk:n kanssa yksiin menevä fishnet, poimitaan siitä oppilasalueiden ulkorajojen kokoinen otos, luodaan  
 ## rttt:kta vastaavat sarakkeet ja annetaan kaikkiin arvoiksi 0. Tämän jälkeen liitetään spatiaalisesti rttk:n ruututieto fishnettiin.
-## käytetään tätä uutta ruutuaineistoa rttk:n asemesta ja -tapaan tulevissa vaiheissa
 
 # A. luodaan fishnet
 
@@ -104,7 +96,10 @@ for index2, ruutu in fishnet.iterrows():
 fishnet_hki = gpd.GeoDataFrame(data,columns=['geometry'])
 fishnet_hki.crs = alueet_proj.crs
 
+# set crs
 fishnet.crs = alueet_proj.crs
+
+# plot for test
 fishnet_hki.plot(facecolor='gray')
 
 
@@ -119,14 +114,69 @@ fn_ruudut_joined.plot(column = 'ki_muu', linewidth=0.5, cmap =  'plasma_r')
 # dropataan index_right -columni jotta voidaan tehdä seuraava liitos
 fn_ruudut_joined = fn_ruudut_joined.drop("index_right", axis = 1)
 
+# lasketaan ruuduille centroidit pisteinä
+fn_ruudut_joined['centroid'] = fn_ruudut_joined.centroid
+for key, row in fn_ruudut_joined.iterrows():
+    fn_ruudut_joined.loc[key,'centroid'] = row['geometry'].centroid
+
+# set geometry to centroid column
+fn_ruudut_joined = fn_ruudut_joined.set_geometry('centroid')
+
+
 # 3. joinataan rttk-ruutuihin tieto, mihin oppilasalueeseen kuuluvat (alueID)
 
 ruudut_joined = gpd.sjoin(fn_ruudut_joined, alueet_proj, how = 'left', op = "within")
 
-# tarkastetaan plottaamalla että kaikki ok
-ruudut_joined.plot(column = 'ki_muu', linewidth=0.5, cmap =  'plasma_r')
+# check and plot the nan rows
+ruudut_nan = ruudut_joined.loc[np.isnan(ruudut_joined['PINTA'])]
+ruudut_nan.plot()
 
-## KAIKKI OK!
+# drop the nan rows
+ruudut_joined = ruudut_joined.loc[~np.isnan(ruudut_joined['PINTA'])]
+ruudut_joined.plot()
+
+# tarkastetaan plottaamalla että kaikki ok
+ruudut_joined.plot(column = 'ki_fi', linewidth=0.5, cmap =  'plasma_r')
+
+# asetetaan geometria takaisin ruuduiksi
+ruudut_joined = ruudut_joined.set_geometry('geometry')
+
+# testataan 
+ruudut_joined.geometry
+
+# pudotetaan centroidicolumni
+ruudut_joined_fin = ruudut_joined.drop(['centroid'], axis = 1)
+
+# plotataan testiksi
+ruudut_joined_fin.plot(column = 'ki_fi', linewidth=0.5, cmap =  'plasma_r')
+
+# korvataan nan -arvot -999:llä
+ruudut_joined_fin1 = ruudut_joined_fin.fillna(-999)
+
+# change data types from bytes and numpy floats and ints to python basic objects
+
+# print the current data types for cols
+for col in ruudut_joined_fin1:
+    print(type(ruudut_joined_fin1.loc[2, col]))
+
+# change the types for cols
+ruudut_joined_fin2 = ruudut_joined_fin1.astype('object')
+
+# check the types for row 5
+for col in ruudut_joined_fin2:
+    print(type(ruudut_joined_fin2.loc[5, col]))
+
+### muuta string-columnit byteistä str-muotoon tallentamista varten
+for col in ruudut_joined_fin2:
+    if (type(ruudut_joined_fin2.loc[5, col]) == str):
+        ruudut_joined_fin2[col] = ruudut_joined_fin2[col].astype(str)
+    
+# tallennetaan varmuuskopio shapefilena
+ruudut_joined_fin2.to_file("/home/hertta/Documents/Gradu/oppilasalueet2018/ruudut_kieli_final.shp")
+
+
+
+
 
 # 5. lasketaan kaikille ruuduille oma pos.diskriminaation indeksinsä. Jaetaan se kaikkien ruutujen keskihajonnalla 
 # jotta saadaan z-arvo. Lasketaan kaikille ruuduille kaikkiin kouluihin myös matkustusaika?
@@ -245,8 +295,27 @@ op_alueet2018 = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/Hk
 
 op_alueet2018.plot(facecolor='gray')
     
-hiidenkivi1 = op_alueet2018.loc[(op_alueet2018["id"] == 114329) | (op_alueet2018["id"] == 114404) ,:]  
+hiidenkivi1 = op_alueet2018.loc[(op_alueet2018["id"] == 114329) | (op_alueet2018["id"] == 114404) ,:] 
+hiidenkivet = cascaded_union(hiidenkivi1['geometry']) 
+op_alueet2018.at[13, 'geometry'] = hiidenkivet
+
+
+
+hiidenkivi2 = op_alueet2018.loc[op_alueet2018["id"] == 114329]
+hiidenkivi2.plot()
+
+op_alueet2018.index[op_alueet2018["id"] == 114404] # 48
+
+op_new = op_alueet2018.drop(48, axis = 0)
+
+op_new.to_file("/home/hertta/Documents/Gradu/oppilasalueet2018/schoolAreas2018.shp")
+
+
+for key, row in ruudut_joined.iterrows():
+    ruudut_joined.loc[key] = row 
+    
+
 
 koulut_osoitteet = pd.read_csv("/home/hertta/Documents/Gradu/oppilasalueet2018/koulut_osoitteet.csv", sep = ",", encoding = "UTF-8")
-
+koulut_geocoded = geocode(koulut_osoitteet['osoite'], provider = 'nominatim')
   

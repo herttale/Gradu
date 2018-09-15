@@ -83,6 +83,7 @@ class SchoolDistr:
     
         # tämä metodi palauttaa ne ruudut, joita self koskee (sivuaa)
         # tämä tehdään joka iteraation joka vuorolla
+        
     
     # hylkäysperiaatteen testaaminen: onko liian kaukana
     def is_too_far(self, block):
