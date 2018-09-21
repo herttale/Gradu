@@ -9,7 +9,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from geopandas.tools import geocode
+
 
 ##### Funktiot #####
 
@@ -43,64 +43,58 @@ def createFishnet(total_bounds, crs, height):
     grid.crs = crs
     return grid
 
-
-
 ########################## ALKUVALMISTELUT ####################################
     
 
-# 1. ladataan aineistot: rttk poiminta ja oppilasalueet
+# 1. ladataan aineistot: rttk poiminta ja oppilasalueet, muutetaan ne euref-fin koordinaatistoon
 
-ruudut = gpd.read_file("/home/hertta/Documents/Kandi/Kandiaineisto/13rttk060_rttk2012/rttk2012_250m.shp")
+ruudut = gpd.read_file("/home/hertsy/Documents/Kandi/Kandiaineisto/13rttk060_rttk2012/rttk2012_250m.shp")
 ruudut.crs
-ruudut.plot(facecolor='gray')
+ruudut = ruudut.to_crs('+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs')
 
-alueet = gpd.read_file("/home/hertta/Documents/Kandi/Kandiaineisto/oppilasalueiden rajat/2015/opevooa_2015_16_ala_aste_suomi.tab")
+
+
+alueet = gpd.read_file("/home/hertsy/Documents/Kandi/Kandiaineisto/oppilasalueiden rajat/2015/opevooa_2015_16_ala_aste_suomi.tab")
 alueet.crs
+alueet = alueet.to_crs('+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs')
 alueet.plot(facecolor='gray')
 
-
-# 2. laitetaan samaan koordinaattijärjestelmään
-alueet_proj = alueet.to_crs(ruudut.crs)
-alueet_proj.crs
-alueet_proj.plot(facecolor='gray')
 
 # tehdään ruuduista helsingin kokoinen poiminta
 ruudut_hki = ruudut.loc[ruudut['KUNTA'] == "091"]
 ruudut_hki.plot(facecolor='gray')
 
-# ropataan turhat columnit
-ruudut_hki = gpd.GeoDataFrame(data,columns=['KUNTA', 'euref_x', 'euref_y', 'ki_vakiy', 'ki_fi',
-       'ki_sv', 'ki_muu', 'geometry'])
+# dropataan turhat columnit
+ruudut_hki = ruudut_hki.filter(items = ['KUNTA', 'euref_x', 'euref_y', 'ki_vakiy', 'ki_fi', 'ki_sv', 'ki_muu', 'geometry'])
 
-# määritetään koordinaattijärjestelmä    
-ruudut_hki.crs = alueet_proj.crs
+# plotataan alueet ja ruudut päällekkäin testiksi
+ 
+ax = alueet.plot(linewidth=0.5, color =  'green');
+ruudut_hki.plot(ax=ax, color='red', alpha=0.5);
 
 ### Luodaan rttk:n kanssa yksiin menevä fishnet, poimitaan siitä oppilasalueiden ulkorajojen kokoinen otos, luodaan  
 ## rttt:kta vastaavat sarakkeet ja annetaan kaikkiin arvoiksi 0. Tämän jälkeen liitetään spatiaalisesti rttk:n ruututieto fishnettiin.
 
 # A. luodaan fishnet
 
-# poimitaan helsingin kokoisesta rttk:sta bounding box -arvot
+
 fishnet = createFishnet(total_bounds = ruudut_hki.total_bounds, crs = ruudut_hki.crs, height = 250)
 
+ax = fishnet.plot(linewidth=0.5, color =  'blue');
+ruudut_hki.plot(ax=ax, color='red', alpha=0.5);
+alueet.plot(ax=ax,linewidth=0.5, color =  'green');
 # poimitaan fishnetistä helsingin muotoinen alue oppilasaluepolygonien perusteella TEE TÄSTÄ FUNKTIO
 
 data = []
 
 for index2, ruutu in fishnet.iterrows():    
-    for index, alue in alueet_proj.iterrows():
+    for index, alue in alueet.iterrows():
        if ruutu['geometry'].intersects(alue['geometry']):
           data.append({'geometry': ruutu['geometry']})
           break
       
 fishnet_hki = gpd.GeoDataFrame(data,columns=['geometry'])
-fishnet_hki.crs = alueet_proj.crs
-
-# set crs
-fishnet.crs = alueet_proj.crs
-
-# plot for test
-fishnet_hki.plot(facecolor='gray')
+fishnet_hki.crs = alueet.crs
 
 
 ## joinataan rttk:n tiedot uuteen hki fishnetiin
@@ -315,7 +309,40 @@ for key, row in ruudut_joined.iterrows():
     ruudut_joined.loc[key] = row 
     
 
+import pandas as pd
+from geopandas.tools import geocode
+koulut_osoitteet = pd.read_csv("/home/hertsy/Documents/Gradu/oppilasalueet2018/koulut_osoitteet.csv", sep = ",", encoding = "UTF-8")
+koulut_geocoded = geocode(koulut_osoitteet['address'], provider = 'Nominatim', user_agent="hertsy")
 
-koulut_osoitteet = pd.read_csv("/home/hertta/Documents/Gradu/oppilasalueet2018/koulut_osoitteet.csv", sep = ",", encoding = "UTF-8")
-koulut_geocoded = geocode(koulut_osoitteet['osoite'], provider = 'nominatim')
-  
+
+
+from geopy.geocoders import Nominatim
+geolocator = Nominatim(user_agent="hertsy")
+coordinates = []
+for value in koulut_osoitteet['address']:
+    location = geolocator.geocode(value)
+    coordinates.append((location.latitude, location.longitude))
+    
+koulut_geocoded = gdp.read_file("/home/hertsy/Documents/Gradu/oppilasalueet2018/koulut_osoitteet_nom2.shp", encoding = "UTF-8")    
+schoolareas = gdp.read_file("/home/hertsy/Documents/Gradu/oppilasalueet2018/schoolAreas2018.shp", encoding = "UTF-8") 
+ruudut_final = gdp.read_file("/home/hertsy/Documents/Gradu/oppilasalueet2018/ruudut_kieli_final.shp", encoding = "UTF-8")
+
+koulut_geocoded = koulut_geocoded.to_crs(schoolareas.crs)
+ruudut_final = ruudut_final.to_crs(schoolareas.crs)
+
+ax = ruudut_final.plot(column = 'ki_fi', linewidth=0.5, cmap =  'plasma_r');
+
+schoolareas.plot(ax=ax, color='red', alpha=0.5);
+
+ruudut_final['ID'] = ruudut_final['ID'].astype(int)
+ruudut_final.plot(column = 'ID', linewidth=0.5, cmap =  'plasma_r')
+
+
+koulut_geocoded = koulut_geocoded.drop(43, axis = 0)
+
+epaonnistuneet = pd.read_csv("/home/hertsy/Documents/Gradu/oppilasalueet2018/notfound_nom.csv")
+
+
+
+
+
