@@ -176,3 +176,19 @@ for key, row in fn_ruudut_joined.iterrows():
     fn_ruudut_joined.loc[key,'centroid'] = row['geometry'].centroid
 
 
+### testataan touches -metodia
+    
+howmany = 0
+block = ruudut_joined_ykr.loc[1711,'geometry_left']
+for key,  row in ruudut_joined_ykr.iterrows():
+    block2 = row['geometry_left']
+    if block2.touches(block):
+        howmany += 1
+    
+    
+    
+    
+    
+    
+    
+    

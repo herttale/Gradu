@@ -33,6 +33,8 @@ koulut_euref_ykr = gpd.sjoin(koulut_euref, ykrgrid, how = 'left', op = "within")
 testim = pd.read_csv("/home/hertsy/Documents/Gradu/ttmatrices/HelsinkiTravelTimeMatrix2018/5900xxx/travel_times_to_ 5900227.txt", sep = ";")
 
 
+
+
 # luetaan yksi kerrallaan tt matrixit data framen sarakkeeseen dicteinä
 koulut_euref_ykr["ttmatrix"] = None
 

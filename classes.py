@@ -21,7 +21,7 @@ class SchoolDistr:
         # tietää omat ruutunsa, muutetaan heti dict-muotoon makeDict -metodilla. Avaimen täytyy olla sama kuin ttmatrixissa
         self.blocks = blocks
 
-        # tietää oman matka-aikamatriisinsa, muutetaan heti dict-muotoon makeDict -metodilla. Avaimen täytyy olla sama kuin blocksissa
+        # tietää oman matka-aikamatriisinsa, muutetaan heti dict-muotoon makeDict -metodilla. Dictin avainten täytyy olla sama kuin blocksissa
         self.ttmatrix = ttmatrix        
         
         # tietää oman polygoninsa, joka lasketaan metodin avulla 
@@ -34,7 +34,7 @@ class SchoolDistr:
         self.studentlimit = studentlimit * 1.25
         
         # tietää oman tämän hetken z-arvonsa
-        self.zvalue = self.calculate_zvalue()
+        self.zvalue = self.calculate_zvalue(block = None)
 
 
 
@@ -55,19 +55,26 @@ class SchoolDistr:
         
         # laskee oman matka-aika-maksimiarvonsa, joka toimii myöhemmin hylkäysperiaatteena. 
         # esim. nyk. maksimikävelyaika * 1.5 ??
-        # tehdään vain kerran, kun instanssi luodaan
-        # 
+        # lasketaan vain kerran, kun instanssi luodaan
+        maxt = 0
+        for key, value in self.blocks.items(): 
+            ttime = self.ttmatrix[key]['walk_d']
+            if ttime > maxt:
+                maxt = ttime
+        
+        self.maxttime = maxt * 1.5
+        
         
     # laske z-arvo 
     def calculate_zvalue(self, block, remove = False):
         
-        if block, self.zvalue == None: # jos operaatio tehdään ensimmäistä kertaa
+        if self.zvalue == None: # jos operaatio tehdään ensimmäistä kertaa
             Zsum = 0
             for key, value in self.blocks.items():
                 Zsum += value.Zvalue
             self.zvalue = Zsum
         
-        elif remove = True:
+        elif remove == True:
             self.zvalue -= block.zvalue
             
         else: # kun myöhemmin lisätään tai poistetaan ruutuja
@@ -79,16 +86,33 @@ class SchoolDistr:
     
               
     # mitä ruutuja instanssi sivuaa (koskee)
-    def touches_which(self, grid)
-    
+    def touches_which(self, grid, geometry_column):
+        
+        # grid  = kaikista block-luokan instansseista koostuva lista
         # tämä metodi palauttaa ne ruudut, joita self koskee (sivuaa)
         # tämä tehdään joka iteraation joka vuorolla
+        # mieti, onko queen contiguity ongelma .touches() -metodissa
+        neighbors = []
         
+        for block in grid:
+            bGeo = block.geometry
+            if bGeo.touches(self.geometry):
+                neighbors.append(block)
+        
+        return neighbors
+    
     
     # hylkäysperiaatteen testaaminen: onko liian kaukana
     def is_too_far(self, block):
         
-        # etsii omasta matka-aikamatriisistaan, onko kyseisen ruudun matka-aika suurempi kuin self.maxttime
+        # etsii omasta matka-aikamatriisistaan, onko kyseisen ruudun matka-aika suurempi kuin self.maxttime.
+        # Palauttaa True jos ruutu on liian kaukana ja hylkäysperiaate toteutuu
+        dist = self.ttmatrix[block.ykrId]['walk_d']
+        if dist <= self.maxttime:
+            return False
+        else:
+            return True
+
 
     # lisää ruutu blocks -dictiin 
     def add_block(self, block):
@@ -129,10 +153,13 @@ class SchoolDistr:
 
 class Block:
     
-    def __init__(self, rttkId, Zvalue, studentBase, schoolDistr):
+    def __init__(self, geometry, ykrId, Zvalue, studentBase, schoolDistr):
 
+        # tietää oman geometriansa
+        self.geometry = geometry
+        
         # tietää oman YKR id:nsä
-        self.rttkId = rttkId
+        self.ykrId = ykrId
         
         # tietää oman z-arvonsa
         self.Zvalue = Zvalue

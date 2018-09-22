@@ -5,7 +5,7 @@ Created on Sat Sep 22 11:25:28 2018
 
 @author: hertsy
 
-Preparing the rttk grid data
+Preparing the rttk language grid data. This is data wrangling with test data, used in development.
 coordinate reference system: etrs-tm35fin
 
 """
@@ -230,3 +230,11 @@ ruudut_joined_ykr_nan = ruudut_joined_ykr.loc[np.isnan(ruudut_joined_ykr['x'])]
 ruudut_joined_ykr_nan.plot()
 
 # drop nan rows
+ruudut_joined_ykr = ruudut_joined_ykr.loc[~np.isnan(ruudut_joined_ykr['x'])]
+
+ruudut_joined_ykr.plot(column = 'z-value', linewidth=0.5, cmap =  'plasma_r')
+
+
+## asetetaan ykrID indexiksi ja splitataan ruudut alueid:n mukaan. Tehdään splitatuista taulukoista dictejä indeksi key-arvona  
+## TODO
+
