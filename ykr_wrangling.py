@@ -17,7 +17,7 @@ koulut_euref = koulut_geocoded.to_crs('+proj=utm +zone=35 +ellps=GRS80 +units=m 
 koulut_euref.plot()
 
 ykrgrid = gpd.read_file("/home/hertsy/Documents/Gradu/ttmatrices/MetropAccess_YKR_grid/MetropAccess_YKR_grid_EurefFIN.shp")
-ykrgrid.crs
+ykrgrid = ykrgrid.to_crs('+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs')
 
 ## plotataan päällekkäin
 
@@ -49,3 +49,4 @@ for index, row in koulut_euref_ykr.iterrows():
     
     ttdict = matrix_ind.to_dict(orient = 'index')
     koulut_euref_ykr.loc[index,"ttmatrix"] = [ttdict]
+

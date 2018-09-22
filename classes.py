@@ -131,7 +131,7 @@ class Block:
     
     def __init__(self, rttkId, Zvalue, studentBase, schoolDistr):
 
-        # tietää oman id:nsä
+        # tietää oman YKR id:nsä
         self.rttkId = rttkId
         
         # tietää oman z-arvonsa

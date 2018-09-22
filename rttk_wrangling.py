@@ -147,7 +147,8 @@ ruudut_joined = ruudut_joined.drop(['centroid', 'KUNTA_left','ALUEJAKO', 'KUNTA_
 # korvataan nan -arvot -999:llä
 ruudut_joined = ruudut_joined.fillna(-1)
 
-
+# rename columns
+ruudut_joined = ruudut_joined.rename({'index_right': "index_alue", "geometry_left" : "geometry"}, axis='columns')
 
 
 ################### THIS SECTION IS ONLY FOR SAVING THE DATA #########################
@@ -204,3 +205,28 @@ muunki_std = np.std(ruudut_joined["ki_muu_osuus"], ddof = 0)
 ruudut_joined["z-value"] = (ruudut_joined["ki_muu_osuus"]-muunki_mean) / muunki_std
 
 # Now the z-value is 0 for blocks that have no residents or are protected
+
+
+############ join YKR IDs to rttk 
+
+# read the file and set crs
+ykrgrid = gpd.read_file("/home/hertsy/Documents/Gradu/ttmatrices/MetropAccess_YKR_grid/MetropAccess_YKR_grid_EurefFIN.shp")
+ykrgrid = ykrgrid.to_crs('+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs')
+
+# calculate centroid for ykr_grid
+ykrgrid['centroid'] = ykrgrid.centroid
+
+# set geometry to centroid column in ykr grid
+ykrgrid = ykrgrid.set_geometry('centroid')
+
+# make spatial join
+ruudut_joined_ykr = gpd.sjoin(ruudut_joined, ykrgrid, how = 'left', op = 'contains')
+
+# make the dataframe geo again
+ruudut_joined_ykr = gpd.GeoDataFrame(ruudut_joined_ykr, geometry = "geometry_left", crs = ykrgrid.crs)
+
+# plot nan rows
+ruudut_joined_ykr_nan = ruudut_joined_ykr.loc[np.isnan(ruudut_joined_ykr['x'])]
+ruudut_joined_ykr_nan.plot()
+
+# drop nan rows
