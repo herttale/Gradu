@@ -54,7 +54,7 @@ ruudut = ruudut.to_crs('+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs')
 
 
 
-alueet = gpd.read_file("/home/hertsy/Documents/Kandi/Kandiaineisto/oppilasalueiden rajat/2015/opevooa_2015_16_ala_aste_suomi.tab")
+alueet = gpd.read_file("/home/hertsy/Documents/Kandi/Kandiaineisto/oppilasalueiden rajat/2015/opevooa_2015_16_ala_aste_suomi.tab", encoding = 'UTF-8')
 alueet.crs
 alueet = alueet.to_crs('+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs')
 alueet.plot(facecolor='gray')
@@ -97,29 +97,32 @@ fishnet_hki = gpd.GeoDataFrame(data,columns=['geometry'])
 fishnet_hki.crs = alueet.crs
 
 
+# lasketaan ruuduille centroidit pisteinä
+
+ruudut_hki['centroid'] = ruudut_hki.centroid
+
+
+# set geometry to centroid column
+ruudut_hki = ruudut_hki.set_geometry('centroid')
+
 ## joinataan rttk:n tiedot uuteen hki fishnetiin
 
-fn_ruudut_joined = gpd.sjoin(fishnet_hki, ruudut_hki, how = 'left', op = 'within')
-
-# plotataan
-fn_ruudut_joined.plot(facecolor='gray')
-fn_ruudut_joined.plot(column = 'ki_muu', linewidth=0.5, cmap =  'plasma_r')
+fn_ruudut_joined = gpd.sjoin(fishnet_hki, ruudut_hki, how = 'left', op = 'contains')
 
 # dropataan index_right -columni jotta voidaan tehdä seuraava liitos
-fn_ruudut_joined = fn_ruudut_joined.drop("index_right", axis = 1)
+fn_ruudut_joined = fn_ruudut_joined.drop(['index_right', 'geometry_right'], axis = 1)
+fn_ruudut_joined = gpd.GeoDataFrame(fn_ruudut_joined, geometry = 'geometry_left', crs = ruudut_hki.crs)
 
-# lasketaan ruuduille centroidit pisteinä
 fn_ruudut_joined['centroid'] = fn_ruudut_joined.centroid
-for key, row in fn_ruudut_joined.iterrows():
-    fn_ruudut_joined.loc[key,'centroid'] = row['geometry'].centroid
 
 # set geometry to centroid column
 fn_ruudut_joined = fn_ruudut_joined.set_geometry('centroid')
 
 
+
 # 3. joinataan rttk-ruutuihin tieto, mihin oppilasalueeseen kuuluvat (alueID)
 
-ruudut_joined = gpd.sjoin(fn_ruudut_joined, alueet_proj, how = 'left', op = "within")
+ruudut_joined = gpd.sjoin(fn_ruudut_joined, alueet, how = 'left', op = "within")
 
 # check and plot the nan rows
 ruudut_nan = ruudut_joined.loc[np.isnan(ruudut_joined['PINTA'])]
@@ -127,80 +130,103 @@ ruudut_nan.plot()
 
 # drop the nan rows
 ruudut_joined = ruudut_joined.loc[~np.isnan(ruudut_joined['PINTA'])]
-ruudut_joined.plot()
 
 # tarkastetaan plottaamalla että kaikki ok
-ruudut_joined.plot(column = 'ki_fi', linewidth=0.5, cmap =  'plasma_r')
+ruudut_joined.plot()
 
 # asetetaan geometria takaisin ruuduiksi
-ruudut_joined = ruudut_joined.set_geometry('geometry')
-
-# testataan 
-ruudut_joined.geometry
+ruudut_joined = ruudut_joined.set_geometry('geometry_left')
 
 # pudotetaan centroidicolumni
-ruudut_joined_fin = ruudut_joined.drop(['centroid'], axis = 1)
+ruudut_joined = ruudut_joined.drop(['centroid', 'KUNTA_left','ALUEJAKO', 'KUNTA_right', 'NIMI_SE', 'ALKUPERAKOODI', 'LUONTI_PVM', 'DATA_MUOKKAAJA', 'MUOKKAUS_PVM', 'OMISTAJA', 'HISTORIA_PVM', 'PINTA', 'MITTAUSERA', 'TARKKUUS', 'DATA_LUOJA'], axis = 1)
 
-# plotataan testiksi
-ruudut_joined_fin.plot(column = 'ki_fi', linewidth=0.5, cmap =  'plasma_r')
 
 # korvataan nan -arvot -999:llä
-ruudut_joined_fin1 = ruudut_joined_fin.fillna(-999)
+ruudut_joined = ruudut_joined.fillna(-1)
 
+
+
+
+################### THIS SECTION IS ONLY FOR SAVING THE DATA #########################
 # change data types from bytes and numpy floats and ints to python basic objects
 
 # print the current data types for cols
-for col in ruudut_joined_fin1:
-    print(type(ruudut_joined_fin1.loc[2, col]))
+for col in ruudut_joined:
+    print(type(ruudut_joined.loc[2, col]))
 
 # change the types for cols
-ruudut_joined_fin2 = ruudut_joined_fin1.astype('object')
+ruudut_joined1 = ruudut_joined.astype('object')
 
 # check the types for row 5
-for col in ruudut_joined_fin2:
-    print(type(ruudut_joined_fin2.loc[5, col]))
+for col in ruudut_joined1:
+    print(type(ruudut_joined1.loc[5, col]))
 
 ### muuta string-columnit byteistä str-muotoon tallentamista varten
-for col in ruudut_joined_fin2:
-    if (type(ruudut_joined_fin2.loc[5, col]) == str):
-        ruudut_joined_fin2[col] = ruudut_joined_fin2[col].astype(str)
+for col in ruudut_joined1:
+    if (type(ruudut_joined1.loc[5, col]) == str):
+        ruudut_joined1[col] = ruudut_joined1[col].astype(str)
     
 # tallennetaan varmuuskopio shapefilena
-ruudut_joined_fin2.to_file("/home/hertta/Documents/Gradu/oppilasalueet2018/ruudut_kieli_final.shp")
+ruudut_joined1.to_file("/home/hertsy/Documents/Gradu/oppilasalueet2018/ruudut_kieli_final.shp")
+
+#############################################################################################
 
 
 
+# 5. lasketaan kaikille ruuduille oma pos.diskriminaation indeksinsä. Jaetaan se kaikkien ruutujen keskihajonnalla jotta saadaan z-arvo.
 
 
-# 5. lasketaan kaikille ruuduille oma pos.diskriminaation indeksinsä. Jaetaan se kaikkien ruutujen keskihajonnalla 
-# jotta saadaan z-arvo. Lasketaan kaikille ruuduille kaikkiin kouluihin myös matkustusaika?
-# Matkustusajan laskemisen vaihtoehdot:
-# - geokoodataan kaikki ala-asteen koulut osoitteiden perusteella, haetaan matka-aikamatriisit kaikkiin kouluihin 
-#
+# muutetaan salatut ruudut luvuksi, joka vastaa keskimääräistä indeksiarvoa (ruutujen arvojen keskiarvo)
 
-# muutetaan salatut ruudut luvuksi, joka vastaa keskimääräistä indeksiarvoa (tässä muunkielisten osuutta koko helsingissä)
-avg_muunkielisten_osuus = sum(ruudut_joined.loc[ruudut_joined["ki_muu"] > -1,"ki_muu"])/sum(ruudut_joined.loc[ruudut_joined["ki_vakiy"] > -1,"ki_vakiy"])
 
-ruudut_joined["ki_muu_osuus"] = avg_muunkielisten_osuus
+ruudut_joined["ki_muu_osuus"] = -1.0
 
 # lasketaan uusi sarake muunkielisten osuudesta kyseisessä ruudussa
 for index, row in ruudut_joined.iterrows():
     if row["ki_muu"] > -1:
         ruudut_joined.at[index,"ki_muu_osuus"] = row["ki_muu"]/row["ki_vakiy"]
+        
+
+muunki_mean = ruudut_joined.loc[ruudut_joined["ki_muu_osuus"] > -1,"ki_muu_osuus"].mean()
+
+
+for index, row in ruudut_joined.iterrows():
+    if row["ki_muu"] == -1:
+        ruudut_joined.at[index,"ki_muu_osuus"] = muunki_mean
 
 # lasketaan muunkielisten osuuden keskihajonta omaan sarakkeeseen
-
 muunki_std = np.std(ruudut_joined["ki_muu_osuus"], ddof = 0)    
-muunki_mean = ruudut_joined["ki_muu_osuus"].mean()
+
 # lasketaan z-arvo
-ruudut_joined["z-value"] = (ruudut_joined["ki_muu_osuus"]- muunki_mean)/muunki_std
+ruudut_joined["z-value"] = (ruudut_joined["ki_muu_osuus"]-muunki_mean) / muunki_std
 
-# (ehkä, jos osoittautuu tarpeelliseksi: luodaan aputaulukko, jossa jokaisen ruudun attribuuttina on lista sen kaikista naapureista 
-# (verkko/vieruslistatoteutus))
+# Now the z-value is 0 for blocks that have no residents or are protected
 
-# 4. tehdään uusi taulukko, jossa polygoneina yhdistetyt oppilasalueruudut, joilla attribuutteina z-arvojen summa.
-# tätä käytetään naapuruuden tunnistamisessa, ja muokataan koko ajan vastaamaan kyseistä hetkeä tekemällä merge ruudulle ja
-# kohdepolygonille ja symmetric_difference ruudulle ja lähtöpolygonille
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+################################################ TESTING STUFF ETC #################################################
+
+
 
 ruudut_final = ruudut_joined.loc[:,("ki_vakiy", "ki_fi", "ki_sv", "ki_muu", "geometry", "NIMI", "TOIMIPISTE_ID", "ki_muu_osuus", "z-value")]
 koulut_final = ruudut_final.dissolve(by='TOIMIPISTE_ID', aggfunc='sum')
@@ -216,11 +242,10 @@ koulut_final["abs_z_value"] = abs(koulut_final["z-value"])
 
 # Määritetään kaikille kouluille (alueille) vakiona pysyvä maksimioppilasmäärä, nykyinen oppilasmäärä(päivitetään joka 
 # iteraatiolla) ja keskimääräinen matka-aika kouluun(päivitetään joka iteraatiolla).
-piirien maksimietäisyydet alkup.alueiden keskipisteistä * 2 ? sopisiko rajoitteeksi?
-uuden ruudun etäisyys siis oltava maks 2 * edellä mainittu. Tämä testataan funktiossa ensin, koska diskauskriteeri
 
 
-###################### ALKUVALMISTELUT PÄÄTTYY ##############################
+
+
 
 # 6. aletaan iteroida alueita yksi kerrallaan käymällä läpi oppilasaluepolygonitaulukkoa 
 
@@ -261,7 +286,7 @@ uuden ruudun etäisyys siis oltava maks 2 * edellä mainittu. Tämä testataan f
 
 # tämän jälkeen         
         
-############################ TESTAUSTA YMS. ############################
+
 
 # Changing matplotlib backend
  
@@ -343,6 +368,7 @@ koulut_geocoded = koulut_geocoded.drop(43, axis = 0)
 epaonnistuneet = pd.read_csv("/home/hertsy/Documents/Gradu/oppilasalueet2018/notfound_nom.csv")
 
 
-
+for key, row in fn_ruudut_joined.iterrows():
+    fn_ruudut_joined.loc[key,'centroid'] = row['geometry'].centroid
 
 
