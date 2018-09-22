@@ -16,7 +16,7 @@ class SchoolDistr:
     
     """
     
-    def __init__(self, blocks, studentlimit: int, ttmatrix):
+    def __init__(self, blocks, ttmatrix):
         
         # tietää omat ruutunsa, muutetaan heti dict-muotoon makeDict -metodilla. Avaimen täytyy olla sama kuin ttmatrixissa
         self.blocks = blocks
@@ -30,8 +30,11 @@ class SchoolDistr:
         # tietää oman maksimimatka-aikansa (nyk. maksimikävelyaika * 1.5 ??)
         self.maxttime = self.calculate_maxttime()
         
-        # tietää oman maksimioppilasmääränsä (tätä ehtoa täytyy hieman löysätä, katsotaan kuinka paljon, nyt kertoimella 1.25)
-        self.studentlimit = studentlimit * 1.25
+        # tietää oman tämänhetkisen oppilasmääränsä
+        self.students = self.calculate_studentbase()
+        
+        # tietää oman maksimioppilasmääränsä, joka lasketaan vain alussa (kertoimella 1.25?)
+        self.studentlimit = self.students * 1.25
         
         # tietää oman tämän hetken z-arvonsa
         self.zvalue = self.calculate_zvalue(block = None)
@@ -83,6 +86,17 @@ class SchoolDistr:
         # lasketaan yhteen blocks-dictin z-valuet.
         # Tehdään vain kerran alussa
         # lisätään z-valueen uusi luku kun otetaan uusi ruutu tai vähennetään z-valuesta luku kun otetaan ruutu pois
+    
+    
+    # laskee oppilaiden (6-8 v ?) hetkellisen määrän alueella
+    def calculate_studentbase(self):
+        
+        studentSum = 0
+        
+        for key, value in self.blocks.items(): 
+            studentSum += self.ttmatrix[key]['ki_vakiy']
+                 
+        self.students =  studentSum
     
               
     # mitä ruutuja instanssi sivuaa (koskee)
@@ -143,11 +157,25 @@ class SchoolDistr:
     # valitse ruutu syötteen setistä
     def select_best_block(self, blockset):
         
-        # tässä käydään looppina setissä olevia blockeja. Jokaisen kohdalla tsekataan ensin hylkäysperiaatteet.
+        # tässä käydään looppina blocksetissä olevia blockeja. Jokaisen kohdalla tsekataan ensin hylkäysperiaatteet.
         # Mikäli hylkäysperiaatteet ok, tsekataan, onko blockin ja selfin z-valueiden summa itseisarvoltaan 
         # lähempänä 0 kuin aikaisempi paras (alussa tämä paras arvo on selfin z-arvo, jotta turhia liitoksia ei tule)
         # lopuksi palautetaan paras ruutu tai tyhjä arvo
         
+        bestBlock = None
+        bestZ = # fixme
+        
+        for block in blockset:
+            
+            # testataan hylkäysperiate 1
+            if (block.studentBase + self.students) <= self.studentlimit:
+                
+                # testataan hylkäysperiaate 2
+                if self.is_too_far(block) == False:
+                    
+                    # testataan onko z-arvojen summa parempi kuin tämänhetkinen self -z-arvo
+                    
+            
 
 
 
