@@ -6,7 +6,10 @@ Created on Fri Jul 27 18:33:29 2018
 @author: hertta
 """
 
+Mainissa:
 
+joka iteraation lopussa tallennetaan kouluAlueiden z-arvojen summa listaan. kun tallennettava arvo on 
+sama tai isompi kuin edellinen tallennettu arvo, iteraatiot lopetetaan.
 
 
 

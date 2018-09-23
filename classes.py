@@ -163,8 +163,7 @@ class SchoolDistr:
         # lopuksi palautetaan paras ruutu tai tyhjä arvo
         
         bestBlock = None
-        bestZ = # fixme
-        
+                
         for block in blockset:
             
             # testataan hylkäysperiate 1
@@ -175,7 +174,27 @@ class SchoolDistr:
                     
                     # testataan onko z-arvojen summa parempi kuin tämänhetkinen self -z-arvo
                     
-            
+                    # kun bestBlock on tyhjä, verrataan alueen self.zvalueen
+                    if bestBlock == None:
+                       
+                        # jos block.zvalue ja self.zvalue -summan itseisarvo on pienempi kuin self.zvalue yksin, block = bestBlock
+                        if abs(block.zvalue + self.zvalue) < abs(self.zvalue):
+                            
+                            bestBlock = block
+                    
+                    # kun bestBlock ei ole tyhjä, verrataan bestblockin zvaluen ja self.zvaluen summan itseisarvoon
+                    else:
+                        
+                        if abs(block.zvalue + self.zvalue) < abs(bestBlock.zvalue + self.zvalue):
+                            
+                            bestBlock = block
+                    
+        return bestBlock
+ 
+
+
+
+###########################################################           
 
 
 
@@ -190,7 +209,7 @@ class Block:
         self.ykrId = ykrId
         
         # tietää oman z-arvonsa
-        self.Zvalue = Zvalue
+        self.zvalue = zvalue
         
         # tietää oman ala-asteikäisten lasten määränsä
         self.studentBase = studentBase
@@ -200,7 +219,3 @@ class Block:
 
 
 
-Mainissa:
-
-joka iteraation lopussa tallennetaan kouluAlueiden z-arvojen summa listaan. kun tallennettava arvo on 
-sama tai isompi kuin edellinen tallennettu arvo, iteraatiot lopetetaan.
