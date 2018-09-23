@@ -6,6 +6,25 @@ Created on Fri Jul 27 18:33:29 2018
 @author: hertta
 """
 
+
+
+# luodaan blocks -instanssit ja muutetaan ne dictiksi, avaimena ykrID
+
+blockDict = None
+
+# luodaan schoolDistr -instanssit ja muutetaan ne dictiksi, avaimena schoolID
+
+sdDict = None
+
+# luodaan muuttuja, joka seuraa sdDictin z-arvojen muutosta
+
+# Iteroidan sdDictiä kunnes 
+
+
+
+
+
+
 Mainissa:
 
 joka iteraation lopussa tallennetaan kouluAlueiden z-arvojen summa listaan. kun tallennettava arvo on 

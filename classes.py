@@ -6,6 +6,7 @@ Created on Fri Sep  7 10:51:21 2018
 @author: hertta
 """
 from shapely.ops import cascaded_union
+import pandas as pd 
 import xxx, xxx, xxx
 
 
@@ -16,7 +17,10 @@ class SchoolDistr:
     
     """
     
-    def __init__(self, blocks, ttmatrix):
+    def __init__(self,schoolID, blocks, ttmatrix):
+        
+        # tietää oman kouluID:nsä
+        self.schoolID = schoolID
         
         # tietää omat ruutunsa, muutetaan heti dict-muotoon makeDict -metodilla. Avaimen täytyy olla sama kuin ttmatrixissa
         self.blocks = blocks
@@ -137,9 +141,11 @@ class SchoolDistr:
         if block == None:
             return
         else:
-            self.blocks[block.rttkId] = block
+            block.schoolDistr = self.shoolID
+            self.blocks[block.ykrId] = block
             self.zvalue = self.calculate_zvalue(block)
             self.geometry = self.calculate_geometry()
+            
         
     # poista ruutu blocks -dictistä 
     def remove_block(self, block):
@@ -200,7 +206,7 @@ class SchoolDistr:
 
 class Block:
     
-    def __init__(self, geometry, ykrId, Zvalue, studentBase, schoolDistr):
+    def __init__(self, geometry, ykrId, zvalue, studentBase, schoolDistr):
 
         # tietää oman geometriansa
         self.geometry = geometry
@@ -214,7 +220,7 @@ class Block:
         # tietää oman ala-asteikäisten lasten määränsä
         self.studentBase = studentBase
         
-        # tietää oman tämän hetkisen alueensa
+        # tietää oman tämän hetkisen kouluID:nsä
         self.schoolDistr = schoolDistr
 
 
