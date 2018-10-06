@@ -213,7 +213,7 @@ class SchoolDistr:
 
 class Block:
     
-    def __init__(self, geometry, ykrId, zvalue, studentBase):
+    def __init__(self, geometry, ykrId, zvalue, studentBase, schoolID):
 
         # tietää oman geometriansa
         self.geometry = geometry
@@ -227,11 +227,12 @@ class Block:
         # tietää oman ala-asteikäisten lasten määränsä
         self.studentBase = studentBase
         
+        # tietää oman tämän hetkisen kouluID:nsä
+        self.schoolID = schoolID
+    
+
         
-    # tietää oman tämän hetkisen kouluID:nsä
-    def set_schooldistr(self, schoolDistr):
         
-        self.schoolDistr = schoolDistr
 
 ### TODO:
 # selecting a new block and removing it from schoolDistr should not be able to break contiguity rule

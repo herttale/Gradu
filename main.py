@@ -25,8 +25,8 @@ for key, row in rttk.iterrows():
 
 
 # groupataan rttk
-rttk1 = rttk1.set_index(keys = 'YKR_ID', drop = False)
-rttk_grouped = rttk1.groupby(by = 'ID')
+rttk = rttk.set_index(keys = 'YKR_ID', drop = False)
+rttk_grouped = rttk.groupby(by = 'ID')
 
 districts = {}
 blocks_dict = {}
@@ -54,20 +54,20 @@ for key, row in schools.iterrows():
     #convert matrix to dict
     ttdict = matrix_ind.to_dict(orient = 'index')
     
+    # get the attribute schoolID
+    row_schoolID = row['id']
+    
     # fetch the right block-group, create blocks iteratively and add them to both "blocks" and global variable blocks_dict
-    blocksframe = rttk_grouped.get_group(schoolID)
+    blocksframe = rttk_grouped.get_group(row_schoolID)
     blocks = {}
     for key, row in blocksframe.iterrows():
-        block = Block(geometry = row['geometry'], ykrId = row['YKR_ID'] , zvalue = row['z-value'], studentBase = row['pupils'])
+        block = Block(geometry = row['geometry'], ykrId = row['YKR_ID'] , zvalue = row['z-value'], studentBase = row['pupils'], schoolID = row_schoolID)
         blocks[row['YKR_ID']] = block
         blocks_dict[row['YKR_ID']] = block
     
-    # get the last attribute schoolID
-    schoolID = row['id']
-    
     # now create district and add it to dict "districts"
-    distr = SchoolDistr(schoolID, blocks, ttdict)
-    districts[row['id']] = distr
+    distr = SchoolDistr(row_schoolID, blocks, ttdict)
+    districts[row_schoolID] = distr
     break
     
 
