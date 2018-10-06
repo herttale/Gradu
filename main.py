@@ -28,10 +28,12 @@ for key, row in rttk.iterrows():
 rttk = rttk.set_index(keys = 'YKR_ID', drop = False)
 rttk_grouped = rttk.groupby(by = 'ID')
 
+
+######### build blocks, districts and separate dict of blocks
+
 districts = {}
 blocks_dict = {}
 
-######### build blocks, districts and separate dict of blocks
 for key, row in schools.iterrows():
     
     ##### fetch the correct travel time matrix based on school ykrID
@@ -68,25 +70,18 @@ for key, row in schools.iterrows():
     # now create district and add it to dict "districts"
     distr = SchoolDistr(row_schoolID, blocks, ttdict)
     districts[row_schoolID] = distr
-    break
+    
     
 
 
 
- 
-testdistr = SchoolDistr(schoolID, blocks, ttmatrix)
-
-# luodaan blocks -instanssit groupby-objektista ja muutetaan ne dictiksi, avaimina ykrID
-# lisätään 
-blockDict = None
-
-    # luodaan schoolDistr -instanssit ja muutetaan ne dictiksi, avaimena schoolID
-sdDict = None
-
-# luodaan lista Zfactor, joka seuraa sdDictin z-arvojen muutosta. Alustetaan se sdDictin z-arvojen itseisarvojen summalla.
+# luodaan lista Zfactor, joka seuraa sdDictin z-arvojen muutosta. Alustetaan se districtsin z-arvojen itseisarvojen summalla.
 Zfactor = []
 
-# Iteroidan sdDictiä kunnes Zfactor ei enää muutu juurikaan pienemmäksi, jolloin palautetaan viimeinen tilanne ja break
+# luodaan kierroksia laskeva muuttuja. Sitä käytetään mm. määrittämään, milloin Zfactorin kehitystä aletaan tarkkailla ja suoritus voidaan pysäyttää.
+iteration = 1
+
+# Iteroidan sdDictiä kunnes iteration on vähintään raja-arvo ja Zfactor ei enää muutu juurikaan pienemmäksi, jolloin palautetaan viimeinen tilanne ja break
 while True:
 
     for distr in sdDict:
@@ -111,8 +106,9 @@ todennäköisyyden käyttäminen randomin/parhaan valinnassa:
 - joka iteraatiolla vähennetään luvusta 70 luku 1
 
 
-
-
+TODO:
+- schoolDistrille funktio randomin ruudun valitsemiseksi
+- contiguityn rikkoutumisen estäminen: täytyy olla oma metodi, joka täytyy aina suorittaa select best block -metodissa hylkäysperiaatteena.
 
 
 
