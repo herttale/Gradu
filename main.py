@@ -19,7 +19,7 @@ for key, row in rttk1.iterrows():
     if row['pupils'] < 0:
         rttk1.loc[key,'pupils'] = 0
 
-# testataan block -ja schooldistr 
+##################### testataan block -ja schooldistr 
 testb_attr = rttk1.iloc[0,:]
 testblock = Block(geometry = testb_attr['geometry'], ykrId = testb_attr['YKR_ID'] , zvalue = testb_attr['z-value'], studentBase = testb_attr['pupils'])
 
@@ -45,10 +45,18 @@ for index, row in schools.iterrows():
 rttk1 = rttk1.set_index(keys = 'YKR_ID', drop = False)
 rttk_grouped = rttk1.groupby(by = 'ID')
 
+
+# build testdistr
 for key, row in schools.iterrows():
     schoolID = row['id']
-    blocks = rttk_grouped.get_group(schoolID).to_dict(orient = 'index')
+    
     ttmatrix = row['ttmatrix']
+    blocksframe = rttk_grouped.get_group(schoolID)
+    blocks = {}
+    for key, row in blocksframe.iterrows():
+        block = Block(geometry = row['geometry'], ykrId = row['YKR_ID'] , zvalue = row['z-value'], studentBase = row['pupils'])
+        blocks[row['YKR_ID']] = block
+    
     testdistr = SchoolDistr(schoolID, blocks, ttmatrix)
     break
     
