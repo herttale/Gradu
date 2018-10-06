@@ -23,6 +23,41 @@ for key, row in rttk1.iterrows():
 testb_attr = rttk1.iloc[0,:]
 testblock = Block(geometry = testb_attr['geometry'], ykrId = testb_attr['YKR_ID'] , zvalue = testb_attr['z-value'], studentBase = testb_attr['pupils'])
 
+
+# lisätään ttmatrixit school-tauluun
+schools["ttmatrix"] = None
+
+for index, row in schools.iterrows():
+    ykrid = row['YKR_ID']
+    fourFirst = str(ykrid)[0:4]
+    
+    fp = "/home/hertta/Documents/Gradu/ttmatrices/HelsinkiTravelTimeMatrix2018/" + fourFirst + "xxx/" +"travel_times_to_ " + str(ykrid) + ".txt"
+    matrix = pd.read_csv(fp, sep = ";")
+    matrix_ind = matrix.set_index("from_id")
+    
+    # tässä pitää käsitellä -1 arvot ja poistaa turhat sarakkeet myöhemmissä versioissa
+    # lisäksi pitää miettiä, mikä dictirakenne on kätevin: https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.to_dict.html
+    
+    ttdict = matrix_ind.to_dict(orient = 'index')
+    schools.loc[index,"ttmatrix"] = [ttdict]
+
+# groupataan rttk
+rttk1 = rttk1.set_index(keys = 'YKR_ID', drop = False)
+rttk_grouped = rttk1.groupby(by = 'ID')
+
+for key, row in schools.iterrows():
+    schoolID = row['id']
+    blocks = rttk_grouped.get_group(schoolID).to_dict(orient = 'index')
+    ttmatrix = row['ttmatrix']
+    testdistr = SchoolDistr(schoolID, blocks, ttmatrix)
+    break
+    
+
+
+
+ 
+testdistr = SchoolDistr(schoolID, blocks, ttmatrix)
+
 # luodaan blocks -instanssit groupby-objektista ja muutetaan ne dictiksi, avaimina ykrID
 # lisätään 
 blockDict = None
