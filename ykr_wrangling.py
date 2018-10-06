@@ -33,8 +33,17 @@ koulut_euref_ykr = gpd.sjoin(koulut_euref, ykrgrid, how = 'left', op = "within")
 
 koulut_euref_ykr['id'] = koulut_euref_ykr['id'].astype(int)
 
+## asetetaan id indexiksi   
+
+koulut_euref_ykr = koulut_euref_ykr.set_index(keys = 'id', drop = False)
+
+
+## Save as file
+
+koulut_euref_ykr.to_file("/home/hertta/Documents/Gradu/oppilasalueet2018/koulut_euref_ykr.shp") 
+
 #luetaan testiksi yksi matriisi
-testim = pd.read_csv("/home/hertsy/Documents/Gradu/ttmatrices/HelsinkiTravelTimeMatrix2018/5900xxx/travel_times_to_ 5900227.txt", sep = ";")
+#testim = pd.read_csv("/home/hertsy/Documents/Gradu/ttmatrices/HelsinkiTravelTimeMatrix2018/5900xxx/travel_times_to_ 5900227.txt", sep = ";")
 
 
 

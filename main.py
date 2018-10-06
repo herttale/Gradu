@@ -6,9 +6,22 @@ Created on Fri Jul 27 18:33:29 2018
 @author: hertta
 """
 
+import geopandas as gpd
+import pandas as pd
+
+
+rttk = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/wrangled_rttk.shp", encoding = "UTF-8")
+schools = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/koulut_euref_ykr.shp", encoding = "UTF-8")
+
+# for testing purposes, create a new column in rttk including "pupils": 0.2 * ki_vakiy
+rttk1['pupils'] = rttk1['ki_vakiy']*0.15
+for key, row in rttk1.iterrows():
+    if row['pupils'] < 0:
+        rttk1.loc[key,'pupils'] = 0
+
 # testataan block -ja schooldistr 
-testb_attr = ruudut_ykrindex.iloc[0,:]
-testblock = Block(geometry = testb_attr[0], ykrId = testb_attr['YKR_ID'] , zvalue = testb_attr['z-value'], studentBase)
+testb_attr = rttk1.iloc[0,:]
+testblock = Block(geometry = testb_attr['geometry'], ykrId = testb_attr['YKR_ID'] , zvalue = testb_attr['z-value'], studentBase = testb_attr['pupils'])
 
 # luodaan blocks -instanssit groupby-objektista ja muutetaan ne dictiksi, avaimina ykrID
 # lisätään 
@@ -30,7 +43,7 @@ while True:
 
 
 
-
+Idealista
 
 Mainissa:
 
@@ -38,6 +51,11 @@ joka iteraation lopussa tallennetaan kouluAlueiden z-arvojen summa listaan. kun 
 sama tai isompi kuin edellinen tallennettu arvo, iteraatiot lopetetaan.
 
 
+todennäköisyyden käyttäminen randomin/parhaan valinnassa:
+-muttuja a:n alkuarvoksi esim. 70
+- arvotaan random arvo väliltä 0, 70
+- jos arvo on yli 50, tehdään random valinta, jos alle 50 valitaan paras ruutu
+- joka iteraatiolla vähennetään luvusta 70 luku 1
 
 
 
@@ -116,7 +134,29 @@ koulut_final["abs_z_value"] = abs(koulut_final["z-value"])
 
 # tämän jälkeen         
         
-
+#################### SAVING THE DATA, byte error #########################
+## change data types from bytes and numpy floats and ints to python basic objects
+#
+## print the current data types for cols
+#for col in ruudut_joined:
+#    print(type(ruudut_joined.loc[2, col]))
+#
+## change the types for cols
+#ruudut_joined1 = ruudut_joined.astype('object')
+#
+## check the types for row 5
+#for col in ruudut_joined1:
+#    print(type(ruudut_joined1.loc[5, col]))
+#
+#### muuta string-columnit byteistä str-muotoon tallentamista varten
+#for col in ruudut_joined1:
+#    if (type(ruudut_joined1.loc[5, col]) == str):
+#        ruudut_joined1[col] = ruudut_joined1[col].astype(str)
+#    
+## tallennetaan varmuuskopio shapefilena
+#ruudut_joined1.to_file("/home/hertta/Documents/Gradu/oppilasalueet2018/ruudut_kieli_final.shp")
+#
+##############################################################################################
 
 # Changing matplotlib backend
  

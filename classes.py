@@ -229,4 +229,4 @@ class Block:
 
 ### TODO:
 # selecting a new block and removing it from schoolDistr should not be able to break contiguity rule
-# in order to find the global optimum, there should be a diminishing chance to choose a random block instead of best block
+# in order to find the global optimum, there should be a diminishing chance to choose a random block instead of best block: make method select_random_block
