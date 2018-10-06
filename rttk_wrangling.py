@@ -9,7 +9,7 @@ Preparing the rttk language grid data. This is data wrangling with test data, us
 coordinate reference system: etrs-tm35fin
 
 """
-
+import pandas as pd
 import geopandas as gpd
 import numpy as np
 
@@ -51,13 +51,13 @@ def createFishnet(total_bounds, crs, height):
 
 # 1. ladataan aineistot: rttk poiminta ja oppilasalueet, muutetaan ne euref-fin koordinaatistoon
 
-ruudut = gpd.read_file("/home/hertsy/Documents/Kandi/Kandiaineisto/13rttk060_rttk2012/rttk2012_250m.shp")
+ruudut = gpd.read_file("/home/hertta/Documents/Kandi/Kandiaineisto/13rttk060_rttk2012/rttk2012_250m.shp")
 ruudut.crs
 ruudut = ruudut.to_crs('+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs')
 
 
 
-alueet = gpd.read_file("/home/hertsy/Documents/Kandi/Kandiaineisto/oppilasalueiden rajat/2015/opevooa_2015_16_ala_aste_suomi.tab", encoding = 'UTF-8')
+alueet = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/schoolAreas2018.shp", encoding = 'UTF-8')
 alueet.crs
 alueet = alueet.to_crs('+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs')
 alueet.plot(facecolor='gray')
@@ -128,11 +128,11 @@ fn_ruudut_joined = fn_ruudut_joined.set_geometry('centroid')
 ruudut_joined = gpd.sjoin(fn_ruudut_joined, alueet, how = 'left', op = "within")
 
 # check and plot the nan rows
-ruudut_nan = ruudut_joined.loc[np.isnan(ruudut_joined['PINTA'])]
+ruudut_nan = ruudut_joined.loc[np.isnan(ruudut_joined['ID'])]
 ruudut_nan.plot()
 
 # drop the nan rows
-ruudut_joined = ruudut_joined.loc[~np.isnan(ruudut_joined['PINTA'])]
+ruudut_joined = ruudut_joined.loc[~np.isnan(ruudut_joined['ID'])]
 
 # tarkastetaan plottaamalla että kaikki ok
 ruudut_joined.plot()
@@ -141,40 +141,15 @@ ruudut_joined.plot()
 ruudut_joined = ruudut_joined.set_geometry('geometry_left')
 
 # pudotetaan centroidicolumni
-ruudut_joined = ruudut_joined.drop(['centroid', 'KUNTA_left','ALUEJAKO', 'KUNTA_right', 'NIMI_SE', 'ALKUPERAKOODI', 'LUONTI_PVM', 'DATA_MUOKKAAJA', 'MUOKKAUS_PVM', 'OMISTAJA', 'HISTORIA_PVM', 'PINTA', 'MITTAUSERA', 'TARKKUUS', 'DATA_LUOJA'], axis = 1)
+ruudut_joined = ruudut_joined.drop(['centroid', 'KUNTA_left','ALUEJAKO', 'KUNTA_right', 'NIMI_SE', 'YHTLUONTIP', 
+                                    'YHTDATANOM', 'PAIVITETTY'], axis = 1)
 
 
-# korvataan nan -arvot -999:llä
+# korvataan nan -arvot -1:llä
 ruudut_joined = ruudut_joined.fillna(-1)
 
 # rename columns
-ruudut_joined = ruudut_joined.rename({'index_right': "index_alue", "geometry_left" : "geometry"}, axis='columns')
-
-
-################### THIS SECTION IS ONLY FOR SAVING THE DATA #########################
-# change data types from bytes and numpy floats and ints to python basic objects
-
-# print the current data types for cols
-for col in ruudut_joined:
-    print(type(ruudut_joined.loc[2, col]))
-
-# change the types for cols
-ruudut_joined1 = ruudut_joined.astype('object')
-
-# check the types for row 5
-for col in ruudut_joined1:
-    print(type(ruudut_joined1.loc[5, col]))
-
-### muuta string-columnit byteistä str-muotoon tallentamista varten
-for col in ruudut_joined1:
-    if (type(ruudut_joined1.loc[5, col]) == str):
-        ruudut_joined1[col] = ruudut_joined1[col].astype(str)
-    
-# tallennetaan varmuuskopio shapefilena
-ruudut_joined1.to_file("/home/hertsy/Documents/Gradu/oppilasalueet2018/ruudut_kieli_final.shp")
-
-#############################################################################################
-
+ruudut_joined = ruudut_joined.rename(columns = {'index_right': "index_alue", "geometry_left" : "geometry"})
 
 
 # 5. lasketaan kaikille ruuduille oma pos.diskriminaation indeksinsä. Jaetaan se kaikkien ruutujen keskihajonnalla jotta saadaan z-arvo.
@@ -210,7 +185,7 @@ ruudut_joined["z-value"] = (ruudut_joined["ki_muu_osuus"]-muunki_mean) / muunki_
 ############ join YKR IDs to rttk 
 
 # read the file and set crs
-ykrgrid = gpd.read_file("/home/hertsy/Documents/Gradu/ttmatrices/MetropAccess_YKR_grid/MetropAccess_YKR_grid_EurefFIN.shp")
+ykrgrid = gpd.read_file("/home/hertta/Documents/Gradu/ttmatrices/MetropAccess_YKR_grid/MetropAccess_YKR_grid_EurefFIN.shp")
 ykrgrid = ykrgrid.to_crs('+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs')
 
 # calculate centroid for ykr_grid
@@ -234,7 +209,43 @@ ruudut_joined_ykr = ruudut_joined_ykr.loc[~np.isnan(ruudut_joined_ykr['x'])]
 
 ruudut_joined_ykr.plot(column = 'z-value', linewidth=0.5, cmap =  'plasma_r')
 
+#
+
+ruudut_joined_ykr['ID'] = ruudut_joined_ykr['ID'].astype(int)
+
 
 ## asetetaan ykrID indexiksi ja splitataan ruudut alueid:n mukaan. Tehdään splitatuista taulukoista dictejä indeksi key-arvona  
-## TODO
 
+# set new index
+ruudut_ykrindex = ruudut_joined_ykr.set_index(keys = 'YKR_ID', drop = False)
+
+ruudut_grouped = ruudut_ykrindex.groupby(by = 'ID')
+
+#for key, group in ruudut_grouped:
+#    
+#    print(key)
+
+
+################### THIS SECTION IS ONLY FOR SAVING THE DATA #########################
+# change data types from bytes and numpy floats and ints to python basic objects
+
+# print the current data types for cols
+for col in ruudut_joined:
+    print(type(ruudut_joined.loc[2, col]))
+
+# change the types for cols
+ruudut_joined1 = ruudut_joined.astype('object')
+
+# check the types for row 5
+for col in ruudut_joined1:
+    print(type(ruudut_joined1.loc[5, col]))
+
+### muuta string-columnit byteistä str-muotoon tallentamista varten
+for col in ruudut_joined1:
+    if (type(ruudut_joined1.loc[5, col]) == str):
+        ruudut_joined1[col] = ruudut_joined1[col].astype(str)
+    
+# tallennetaan varmuuskopio shapefilena
+ruudut_joined1.to_file("/home/hertta/Documents/Gradu/oppilasalueet2018/ruudut_kieli_final.shp")
+
+#############################################################################################

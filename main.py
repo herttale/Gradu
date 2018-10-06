@@ -6,19 +6,26 @@ Created on Fri Jul 27 18:33:29 2018
 @author: hertta
 """
 
+# testataan block -ja schooldistr 
+testb_attr = ruudut_ykrindex.iloc[0,:]
+testblock = Block(geometry = testb_attr[0], ykrId = testb_attr['YKR_ID'] , zvalue = testb_attr['z-value'], studentBase)
 
-
-# luodaan blocks -instanssit ja muutetaan ne dictiksi, avaimena ykrID
-
+# luodaan blocks -instanssit groupby-objektista ja muutetaan ne dictiksi, avaimina ykrID
+# lisätään 
 blockDict = None
 
-# luodaan schoolDistr -instanssit ja muutetaan ne dictiksi, avaimena schoolID
-
+    # luodaan schoolDistr -instanssit ja muutetaan ne dictiksi, avaimena schoolID
 sdDict = None
 
-# luodaan muuttuja, joka seuraa sdDictin z-arvojen muutosta
+# luodaan lista Zfactor, joka seuraa sdDictin z-arvojen muutosta. Alustetaan se sdDictin z-arvojen itseisarvojen summalla.
+Zfactor = []
 
-# Iteroidan sdDictiä kunnes 
+# Iteroidan sdDictiä kunnes Zfactor ei enää muutu juurikaan pienemmäksi, jolloin palautetaan viimeinen tilanne ja break
+while True:
+
+    for distr in sdDict:
+        
+    
 
 
 
@@ -29,9 +36,6 @@ Mainissa:
 
 joka iteraation lopussa tallennetaan kouluAlueiden z-arvojen summa listaan. kun tallennettava arvo on 
 sama tai isompi kuin edellinen tallennettu arvo, iteraatiot lopetetaan.
-
-
-
 
 
 
@@ -208,9 +212,16 @@ for key,  row in ruudut_joined_ykr.iterrows():
         howmany += 1
     
     
-    
-    
-    
-    
-    
-    
+# test for equal ids
+
+koulut_uniq = koulut_euref_ykr['id'].unique()
+alueet_uniq = ruudut_ykrindex['ID'].unique()        
+
+type(koulut_uniq)
+koulut_uniq.dtype
+alueet_uniq.dtype
+koulut_uniq = np.array(koulut_uniq,dtype='float64') 
+
+koulut_uniq.sort()
+alueet_uniq.sort()
+   

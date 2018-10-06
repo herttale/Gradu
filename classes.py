@@ -7,7 +7,7 @@ Created on Fri Sep  7 10:51:21 2018
 """
 from shapely.ops import cascaded_union
 import pandas as pd 
-import xxx, xxx, xxx
+
 
 
 class SchoolDistr: 
@@ -22,10 +22,10 @@ class SchoolDistr:
         # tietää oman kouluID:nsä
         self.schoolID = schoolID
         
-        # tietää omat ruutunsa, muutetaan heti dict-muotoon makeDict -metodilla. Avaimen täytyy olla sama kuin ttmatrixissa
+        # tietää omat ruutunsa, dictiavaimen täytyy olla sama kuin ttmatrixissa
         self.blocks = blocks
 
-        # tietää oman matka-aikamatriisinsa, muutetaan heti dict-muotoon makeDict -metodilla. Dictin avainten täytyy olla sama kuin blocksissa
+        # tietää oman matka-aikamatriisinsa, Dictin avainten täytyy olla sama kuin blocksissa
         self.ttmatrix = ttmatrix        
         
         # tietää oman polygoninsa, joka lasketaan metodin avulla 
@@ -110,6 +110,7 @@ class SchoolDistr:
         # tämä metodi palauttaa ne ruudut, joita self koskee (sivuaa)
         # tämä tehdään joka iteraation joka vuorolla
         # mieti, onko queen contiguity ongelma .touches() -metodissa
+        # MAINISSA TÄYTYY OLLA OK JOS PALAUTUSARVO ON TYHJÄ, ELI EI KOSKETETA MITÄÄN
         neighbors = []
         
         for block in grid:
@@ -156,7 +157,7 @@ class SchoolDistr:
         if block == None:
             return
         else:
-            del self.blocks[block.rttkId]
+            del self.blocks[block.ykrId]
             self.zvalue = self.calculate_zvalue(block, remove = True)
             self.geometry = self.calculate_geometry()
 
@@ -183,8 +184,8 @@ class SchoolDistr:
                     # kun bestBlock on tyhjä, verrataan alueen self.zvalueen
                     if bestBlock == None:
                        
-                        # jos block.zvalue ja self.zvalue -summan itseisarvo on pienempi kuin self.zvalue yksin, block = bestBlock
-                        if abs(block.zvalue + self.zvalue) < abs(self.zvalue):
+                        # jos block.zvalue ja self.zvalue -summan itseisarvo on pienempi tai yhtäsuuri kuin self.zvalue yksin, block = bestBlock
+                        if abs(block.zvalue + self.zvalue) <= abs(self.zvalue):
                             
                             bestBlock = block
                     
@@ -206,7 +207,7 @@ class SchoolDistr:
 
 class Block:
     
-    def __init__(self, geometry, ykrId, zvalue, studentBase, schoolDistr):
+    def __init__(self, geometry, ykrId, zvalue, studentBase):
 
         # tietää oman geometriansa
         self.geometry = geometry
@@ -220,8 +221,12 @@ class Block:
         # tietää oman ala-asteikäisten lasten määränsä
         self.studentBase = studentBase
         
-        # tietää oman tämän hetkisen kouluID:nsä
+        
+    # tietää oman tämän hetkisen kouluID:nsä
+    def set_schooldistr(self, schoolDistr):
+        
         self.schoolDistr = schoolDistr
 
-
-
+### TODO:
+# selecting a new block and removing it from schoolDistr should not be able to break contiguity rule
+# in order to find the global optimum, there should be a diminishing chance to choose a random block instead of best block

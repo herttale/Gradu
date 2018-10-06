@@ -29,6 +29,10 @@ koulut_euref.plot(ax=ax, color='red', alpha=0.5);
 
 koulut_euref_ykr = gpd.sjoin(koulut_euref, ykrgrid, how = 'left', op = "within")
 
+## muutetaan id-sarakkeen datatyyppi integeriksi
+
+koulut_euref_ykr['id'] = koulut_euref_ykr['id'].astype(int)
+
 #luetaan testiksi yksi matriisi
 testim = pd.read_csv("/home/hertsy/Documents/Gradu/ttmatrices/HelsinkiTravelTimeMatrix2018/5900xxx/travel_times_to_ 5900227.txt", sep = ";")
 
@@ -42,7 +46,7 @@ for index, row in koulut_euref_ykr.iterrows():
     ykrid = row['YKR_ID']
     fourFirst = str(ykrid)[0:4]
     
-    fp = "/home/hertsy/Documents/Gradu/ttmatrices/HelsinkiTravelTimeMatrix2018/" + fourFirst + "xxx/" +"travel_times_to_ " + str(ykrid) + ".txt"
+    fp = "/home/hertta/Documents/Gradu/ttmatrices/HelsinkiTravelTimeMatrix2018/" + fourFirst + "xxx/" +"travel_times_to_ " + str(ykrid) + ".txt"
     matrix = pd.read_csv(fp, sep = ";")
     matrix_ind = matrix.set_index("from_id")
     
