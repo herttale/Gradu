@@ -10,7 +10,9 @@ import geopandas as gpd
 import pandas as pd
 import math
 import statistics as st
-
+import random
+from classes import Block
+from classes import SchoolDistr
 
 rttk = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/wrangled_rttk.shp", encoding = "UTF-8")
 schools = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/koulut_euref_ykr.shp", encoding = "UTF-8")
@@ -25,7 +27,7 @@ for key, row in rttk.iterrows():
 
 
 
-# groupataan rttk
+# group rttk
 rttk = rttk.set_index(keys = 'YKR_ID', drop = False)
 rttk_grouped = rttk.groupby(by = 'ID')
 
@@ -87,15 +89,24 @@ Zfactor = []
 # luodaan kierroksia laskeva muuttuja. Sitä käytetään mm. määrittämään, milloin Zfactorin kehitystä aletaan tarkkailla ja suoritus voidaan pysäyttää.
 iteration = 0
 
+# alustetaan todennäköisyyshomman kattoarvo
+ceil = 120
+
 # Iteroidan sdDictiä kunnes iteration on vähintään raja-arvo ja Zfactor ei enää muutu juurikaan pienemmäksi, jolloin palautetaan viimeinen tilanne ja break
 while True:
     
     
-    # calculate and append Zfactor
+    # calculate and append Zfactor, with sums of district's z-values' absolute values 
+    Z = 0
+    
+    for key, value in districts.items():
+        Z += abs(value.zvalue)
+    
+    Zfactor.append(Z)
     
     
     # test for breaking
-    if iteration >= 30: # testaaminen voi alkaa vasta kun todennäköisyys valita random on ollut 0 jo useita kierroksia
+    if iteration >= 30: # huom, testaaminen voi alkaa vasta kun todennäköisyys valita random on ollut 0 jo useita kierroksia
          
         checkvalue = st.mean(list(Zfactor[iteration], Zfactor[iteration-1], Zfactor[iteration-2], Zfactor[iteration-3])) - Zfactor[iteration]
         
@@ -104,17 +115,41 @@ while True:
             # muodostetaan palautettavat jutut
             #palautetaan
             break
-        
-            
-            
+                       
     #increase iteration
     iteration += 1
     
+   
+    
+    
+    #Iteroidaan kaikki districtit
     for distr in districts:
         
+        # arvo todennäköisyysluku, jos ceil on suurempi kuin 0
+        if ceil > 0:
+            
+            randomint = random.randint(0, ceil)
+            
+        # check what distr touches
+        
+        # select best or random block based on randomint
+        
+        # add block to distr
+        
+        # remove block from districts[block.SchoolID]
+        
+        # calculate geometries for both disttricts
+        
+        # calculate zvalues for both districts
+        
+        # calculate studentbase for both districts
         
         
     
+    # joka iteraatiokierroksen lopussa ceiliä vähennetään 
+    ceil -= 10
+
+
 
 
 
@@ -123,7 +158,7 @@ while True:
 #
 #Mainissa:
 #
-#joka iteraation lopussa tallennetaan kouluAlueiden z-arvojen summa listaan. kun tallennettava arvo on 
+#joka iteraation alussa tallennetaan kouluAlueiden z-arvojen summa listaan. kun tallennettava arvo on 
 #sama tai isompi kuin edellinen tallennettu arvo, iteraatiot lopetetaan.
 #
 #

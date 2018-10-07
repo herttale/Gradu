@@ -54,9 +54,8 @@ class SchoolDistr:
         geomList = []
         for key, item in self.blocks.items():
             geomList.append(item.geometry)
+       
         # yhdistää ruudut yhdeksi polygoniksi ja tallentaa ne muuttujaan self.geometry
-        #blockFrame = pd.DataFrame.from_dict(data = self.blocks, orient='index')
-        #geomList = blockFrame['geometry'].tolist()
         self.geometry = cascaded_union(geomList)
         #return cascaded_union(geomList)
        
@@ -93,9 +92,8 @@ class SchoolDistr:
         elif remove == False and block != None: # kun myöhemmin lisätään tai poistetaan ruutuja
             self.zvalue += block.zvalue
              
-        # lasketaan yhteen blocks-dictin z-valuet.
-        # Tehdään vain kerran alussa
-        # lisätään z-valueen uusi luku kun otetaan uusi ruutu tai vähennetään z-valuesta luku kun otetaan ruutu pois
+        # lasketaan yhteen blocks-dictin z-valuet: Tehdään vain kerran alussa
+         # lisätään z-valueen uusi luku kun otetaan uusi ruutu tai vähennetään z-valuesta luku kun otetaan ruutu pois
     
     
     # laskee oppilaiden (6-8 v ?) hetkellisen määrän alueella

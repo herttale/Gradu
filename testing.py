@@ -265,7 +265,8 @@ testunion = cascaded_union([poly1, poly2])
 
 
 
-
+#blockFrame = pd.DataFrame.from_dict(data = self.blocks, orient='index')
+#geomList = blockFrame['geometry'].tolist()
 
 
 
