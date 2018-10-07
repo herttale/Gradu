@@ -7,6 +7,7 @@ Created on Fri Sep  7 10:51:21 2018
 """
 from shapely.ops import cascaded_union
 from copy import deepcopy
+import random
 
 
 
@@ -243,6 +244,8 @@ class SchoolDistr:
     # valitse random ruutu syötteen setistä. blockset on LISTA, jonka touches() palauttaa
     def select_random_block(self, blockset, districts):
         
+        blocklist = []
+        
         for block in blockset:
             
             # testataan hylkäysperiate 1
@@ -257,7 +260,14 @@ class SchoolDistr:
                     # testataan tietotyypin muuttumista, hylkäysperiaate 3
                     if oldDistr.break_contiguity(block) == False:
                         
-                        # arvotaan numero 
+                        # lisätään blocklistiin
+                        blocklist.append(block)
+        
+        # generoidaan random numero sopivalta väliltä                
+        randomindx = random.randint(0,len(blocklist))
+        
+        # palautetaan random block
+        return blocklist[randomindx]
 
 
 ###########################################################           
