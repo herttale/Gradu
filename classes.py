@@ -6,7 +6,7 @@ Created on Fri Sep  7 10:51:21 2018
 @author: hertta
 """
 from shapely.ops import cascaded_union
-import pandas as pd 
+from copy import deepcopy
 
 
 
@@ -136,10 +136,7 @@ class SchoolDistr:
         # etsii omasta matka-aikamatriisistaan, onko kyseisen ruudun matka-aika suurempi kuin self.maxttime.
         # Palauttaa True jos ruutu on liian kaukana ja hylkäysperiaate toteutuu
         dist = self.ttmatrix[block.ykrId]['walk_d']
-        if dist <= self.maxttime:
-            return False
-        else:
-            return True
+        return dist >= self.maxttime
 
 
     # lisää ruutu blocks -dictiin 
@@ -170,14 +167,36 @@ class SchoolDistr:
             self.zvalue = self.calculate_zvalue(block, remove = True)
             self.geometry = self.calculate_geometry()
             
-    # tsekkaa, ettei ruudun poistaminen riko contiguity-sääntöä. Tämä tehdään aina sille distrille, jolta ruutua oltaisiin ottamassa        
+    
+    # Tämä tehdään aina sille distrille, jolta ruutua oltaisiin ottamassa. Testataan, että distrin 
+    # geometrian tietotyyppi pysyy samana, mikäli yksi ruutu poistetaan (ettei polygonista tule multipolygon - lisättäessä tietotyyppi voi kuitenkin muuttua toiseen suuntaan)       
+    # palauttaa true jos contiguity rikkoutuu
     def break_contiguity(self, block):
+        #kopioidaan self.blocks
+        blocks_copy = deepcopy(self.blocks)
         
+        geomList = []
+        for key, item in blocks_copy.items():
+            geomList.append(item.geometry)
         
+        geom1 = cascaded_union(geomList)
+        
+        #poistetaan kopiosta ruutu
+        del blocks_copy[block.ykrId]
+        
+        geomList = []
+        for key, item in blocks_copy.items():
+            geomList.append(item.geometry)
+            
+        geom2 = cascaded_union(geomList)
+        
+        # palauttaa True jos tietotyyppi muuttu poiston seurauksena
+        return type(geom1) != type(geom2)
+            
         
 
     # valitse ruutu syötteen setistä
-    def select_best_block(self, blockset):
+    def select_best_block(self, blockset, districts):
         
         # tässä käydään looppina blocksetissä olevia blockeja. Jokaisen kohdalla tsekataan ensin hylkäysperiaatteet.
         # Mikäli hylkäysperiaatteet ok, tsekataan, onko blockin ja selfin z-valueiden summa itseisarvoltaan 
@@ -195,11 +214,11 @@ class SchoolDistr:
                 if self.is_too_far(block) == False:
                     
                     # haetaan muuttujaan blockin districti
-                    oldDistr = 
+                    oldDistr = districts[block.schoolID]
                     
+                    # testataan tietotyypin muuttumista, hylkäysperiaate 3
                     if oldDistr.break_contiguity(block) == False:
                         
-                        xxxxxxx
                     
                         # testataan onko z-arvojen summa parempi kuin tämänhetkinen self -z-arvo
                         
