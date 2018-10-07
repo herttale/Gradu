@@ -258,4 +258,20 @@ koulut_uniq.sort()
 alueet_uniq.sort()
 
 
+#testing cascaded union
+poly1 = blocks_dict[5961886.0].geometry
+poly2 = blocks_dict[5894696.0].geometry
+testunion = cascaded_union([poly1, poly2])
+
+
+
+
+
+
+
+
+
+
+
+
 

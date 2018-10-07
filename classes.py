@@ -112,8 +112,8 @@ class SchoolDistr:
         self.studentlimit = self.students * 1.25
     
               
-    # mitä ruutuja instanssi sivuaa (koskee)
-    def touches_which(self, grid, geometry_column):
+    # mitä ruutuja instanssi sivuaa (koskee). Palauttaa LISTAN
+    def touches_which(self, blocks_dict, geometry_column):
         
         # grid  = kaikista block-luokan instansseista koostuva lista
         # tämä metodi palauttaa ne ruudut, joita self koskee (sivuaa)
@@ -122,7 +122,7 @@ class SchoolDistr:
         # MAINISSA TÄYTYY OLLA OK JOS PALAUTUSARVO ON TYHJÄ, ELI EI KOSKETETA MITÄÄN
         neighbors = []
         
-        for block in grid:
+        for key, block in blocks_dict.items():
             bGeo = block.geometry
             if bGeo.touches(self.geometry):
                 neighbors.append(block)
@@ -195,7 +195,7 @@ class SchoolDistr:
             
         
 
-    # valitse ruutu syötteen setistä
+    # valitse paras ruutu syötteen setistä
     def select_best_block(self, blockset, districts):
         
         # tässä käydään looppina blocksetissä olevia blockeja. Jokaisen kohdalla tsekataan ensin hylkäysperiaatteet.
@@ -205,7 +205,7 @@ class SchoolDistr:
         
         bestBlock = None
                 
-        for block in blockset:
+        for block in blockset.items():
             
             # testataan hylkäysperiate 1
             if (block.studentBase + self.students) <= self.studentlimit:
@@ -238,8 +238,26 @@ class SchoolDistr:
                                 bestBlock = block
                         
         return bestBlock
- 
+    
 
+    # valitse random ruutu syötteen setistä. blockset on LISTA, jonka touches() palauttaa
+    def select_random_block(self, blockset, districts):
+        
+        for block in blockset:
+            
+            # testataan hylkäysperiate 1
+            if (block.studentBase + self.students) <= self.studentlimit:
+                
+                # testataan hylkäysperiaate 2
+                if self.is_too_far(block) == False:
+                    
+                    # haetaan muuttujaan blockin districti
+                    oldDistr = districts[block.schoolID]
+                    
+                    # testataan tietotyypin muuttumista, hylkäysperiaate 3
+                    if oldDistr.break_contiguity(block) == False:
+                        
+                        # arvotaan numero 
 
 
 ###########################################################           
@@ -270,5 +288,5 @@ class Block:
         
 
 ### TODO:
-# selecting a new block and removing it from schoolDistr should not be able to break contiguity rule
+# selecting a new block and removing it from schoolDistr should not be able to break contiguity rule DONE
 # in order to find the global optimum, there should be a diminishing chance to choose a random block instead of best block: make method select_random_block
