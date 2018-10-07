@@ -29,19 +29,19 @@ class SchoolDistr:
         self.ttmatrix = ttmatrix        
         
         # tietää oman polygoninsa, joka lasketaan metodin avulla 
-        self.geometry = self.calculate_geometry()
+        self.geometry = None
         
         # tietää oman maksimimatka-aikansa (nyk. maksimikävelyaika * 1.5 ??)
-        self.maxttime = self.calculate_maxttime()
+        self.maxttime = None
         
         # tietää oman tämänhetkisen oppilasmääränsä
-        self.students = self.calculate_studentbase()
+        self.students = None
         
         # tietää oman maksimioppilasmääränsä, joka lasketaan vain alussa (kertoimella 1.25?)
-        self.studentlimit = self.students * 1.25 # tai tähän calculate_studentbase metodi tilalle
+        self.studentlimit = None
         
         # tietää oman tämän hetken z-arvonsa
-        self.zvalue = self.calculate_zvalue(block = None)
+        self.zvalue = None
 
 
 
@@ -56,8 +56,9 @@ class SchoolDistr:
         # yhdistää ruudut yhdeksi polygoniksi ja tallentaa ne muuttujaan self.geometry
         #blockFrame = pd.DataFrame.from_dict(data = self.blocks, orient='index')
         #geomList = blockFrame['geometry'].tolist()
-        return cascaded_union(geomList)
-        ## testattu, toimii itsenäisesti
+        self.geometry = cascaded_union(geomList)
+        #return cascaded_union(geomList)
+       
         
         
     # laske maksimimatka-aika
@@ -72,24 +73,24 @@ class SchoolDistr:
             if ttime > maxt:
                 maxt = ttime
         
-        return maxt * 1.5
+        self.maxttime = maxt * 1.5
         
         
     # laske z-arvo 
     def calculate_zvalue(self, block, remove = False):
         
         #if self.zvalue == None: # jos operaatio tehdään ensimmäistä kertaa
-        if hasattr(self, 'zvalue') == False:
+        if block == None:
             Zsum = 0
             for key, value in self.blocks.items():
                 Zsum += value.zvalue
-            return Zsum
+            self.zvalue = Zsum
         
-        elif remove == True:
-            return self.zvalue - block.zvalue
+        elif remove == True and block != None:
+            self.zvalue -= block.zvalue
             
-        else: # kun myöhemmin lisätään tai poistetaan ruutuja
-            return self.zvalue + block.zvalue
+        elif remove == False and block != None: # kun myöhemmin lisätään tai poistetaan ruutuja
+            self.zvalue += block.zvalue
              
         # lasketaan yhteen blocks-dictin z-valuet.
         # Tehdään vain kerran alussa
@@ -103,10 +104,12 @@ class SchoolDistr:
         
         for key, value in self.blocks.items(): 
             studentSum += value.studentBase
-                 
-        #self.students =  studentSum
-        # TODO kysy Samuelilta, miksi tässä täytyy palauttaa eikä voi viitata vain itseensä
-        return studentSum
+
+        self.students = studentSum
+        
+    def calculate_studentlimit(self):
+        
+        self.studentlimit = self.students * 1.25
     
               
     # mitä ruutuja instanssi sivuaa (koskee)

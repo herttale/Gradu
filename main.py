@@ -69,9 +69,14 @@ for key, row in schools.iterrows():
     
     # now create district and add it to dict "districts"
     distr = SchoolDistr(row_schoolID, blocks, ttdict)
+    distr.calculate_geometry()
+    distr.calculate_maxttime()
+    distr.calculate_studentbase()
+    distr.calculate_zvalue(block = None)
+    distr.calculate_studentlimit()
     districts[row_schoolID] = distr
     
-    
+################# Data is ready    
 
 
 
@@ -83,7 +88,9 @@ iteration = 1
 
 # Iteroidan sdDictiä kunnes iteration on vähintään raja-arvo ja Zfactor ei enää muutu juurikaan pienemmäksi, jolloin palautetaan viimeinen tilanne ja break
 while True:
-
+    
+    iteration += 1
+    Zfactor = 
     for distr in sdDict:
         
     
@@ -108,7 +115,7 @@ todennäköisyyden käyttäminen randomin/parhaan valinnassa:
 
 TODO:
 - schoolDistrille funktio randomin ruudun valitsemiseksi
-- contiguityn rikkoutumisen estäminen: täytyy olla oma metodi, joka täytyy aina suorittaa select best block -metodissa hylkäysperiaatteena.
+- contiguityn rikkoutumisen estäminen: täytyy olla oma metodi, joka täytyy aina suorittaa select best block -metodissa hylkäysperiaatteen tarkistamisena.
 
 
 
