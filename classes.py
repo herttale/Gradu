@@ -169,6 +169,12 @@ class SchoolDistr:
             del self.blocks[block.ykrId]
             self.zvalue = self.calculate_zvalue(block, remove = True)
             self.geometry = self.calculate_geometry()
+            
+    # tsekkaa, ettei ruudun poistaminen riko contiguity-sääntöä. Tämä tehdään aina sille distrille, jolta ruutua oltaisiin ottamassa        
+    def break_contiguity(self, block):
+        
+        
+        
 
     # valitse ruutu syötteen setistä
     def select_best_block(self, blockset):
@@ -188,23 +194,30 @@ class SchoolDistr:
                 # testataan hylkäysperiaate 2
                 if self.is_too_far(block) == False:
                     
-                    # testataan onko z-arvojen summa parempi kuin tämänhetkinen self -z-arvo
+                    # haetaan muuttujaan blockin districti
+                    oldDistr = 
                     
-                    # kun bestBlock on tyhjä, verrataan alueen self.zvalueen
-                    if bestBlock == None:
-                       
-                        # jos block.zvalue ja self.zvalue -summan itseisarvo on pienempi tai yhtäsuuri kuin self.zvalue yksin, block = bestBlock
-                        if abs(block.zvalue + self.zvalue) <= abs(self.zvalue):
-                            
-                            bestBlock = block
-                    
-                    # kun bestBlock ei ole tyhjä, verrataan bestblockin zvaluen ja self.zvaluen summan itseisarvoon
-                    else:
+                    if oldDistr.break_contiguity(block) == False:
                         
-                        if abs(block.zvalue + self.zvalue) < abs(bestBlock.zvalue + self.zvalue):
-                            
-                            bestBlock = block
+                        xxxxxxx
                     
+                        # testataan onko z-arvojen summa parempi kuin tämänhetkinen self -z-arvo
+                        
+                        # kun bestBlock on tyhjä, verrataan alueen self.zvalueen
+                        if bestBlock == None:
+                           
+                            # jos block.zvalue ja self.zvalue -summan itseisarvo on pienempi tai yhtäsuuri kuin self.zvalue yksin, block = bestBlock
+                            if abs(block.zvalue + self.zvalue) <= abs(self.zvalue):
+                                
+                                bestBlock = block
+                        
+                        # kun bestBlock ei ole tyhjä, verrataan bestblockin zvaluen ja self.zvaluen summan itseisarvoon
+                        else:
+                            
+                            if abs(block.zvalue + self.zvalue) < abs(bestBlock.zvalue + self.zvalue):
+                                
+                                bestBlock = block
+                        
         return bestBlock
  
 
