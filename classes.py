@@ -112,7 +112,7 @@ class SchoolDistr:
     
               
     # mitä ruutuja instanssi sivuaa (koskee). Palauttaa LISTAN
-    def touches_which(self, blocks_dict, geometry_column):
+    def touches_which(self, blocks_dict):
         
         # grid  = kaikista block-luokan instansseista koostuva lista
         # tämä metodi palauttaa ne ruudut, joita self koskee (sivuaa)
@@ -151,6 +151,7 @@ class SchoolDistr:
             self.blocks[block.ykrId] = block
             self.zvalue = self.calculate_zvalue(block)
             self.geometry = self.calculate_geometry()
+            self.students = self.calculate_studentbase()
             
         
     # poista ruutu blocks -dictistä 
@@ -165,7 +166,7 @@ class SchoolDistr:
             del self.blocks[block.ykrId]
             self.zvalue = self.calculate_zvalue(block, remove = True)
             self.geometry = self.calculate_geometry()
-            
+            self.students = self.calculate_studentbase()
     
     # Tämä tehdään aina sille distrille, jolta ruutua oltaisiin ottamassa. Testataan, että distrin 
     # geometrian tietotyyppi pysyy samana, mikäli yksi ruutu poistetaan (ettei polygonista tule multipolygon - lisättäessä tietotyyppi voi kuitenkin muuttua toiseen suuntaan)       

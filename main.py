@@ -90,7 +90,7 @@ Zfactor = []
 iteration = 0
 
 # alustetaan todennäköisyyshomman kattoarvo
-ceil = 120
+ceil = 160
 
 # Iteroidan sdDictiä kunnes iteration on vähintään raja-arvo ja Zfactor ei enää muutu juurikaan pienemmäksi, jolloin palautetaan viimeinen tilanne ja break
 while True:
@@ -125,24 +125,34 @@ while True:
     #Iteroidaan kaikki districtit
     for distr in districts:
         
-        # arvo todennäköisyysluku, jos ceil on suurempi kuin 0
-        if ceil > 0:
+        # arvo todennäköisyysluku, jos ceil on suurempi kuin 50, muuten randomint = 0 ja valitaan aina paras
+        if ceil >= 50:
             
             randomint = random.randint(0, ceil)
             
+        else:
+            
+            randomint = 0
+            
         # check what distr touches
+        blist = distr.touches_which(blocks_dict)
         
         # select best or random block based on randomint
+        if randomint > 50:
+            
+            block_toadd = distr.select_random_block(blist, districts)
+            
+        else:
+            
+            block_toadd = distr.select_best_block(blist, districts)
         
         # add block to distr
+        distr.add_block(block_toadd)
+        
         
         # remove block from districts[block.SchoolID]
-        
-        # calculate geometries for both disttricts
-        
-        # calculate zvalues for both districts
-        
-        # calculate studentbase for both districts
+        districts[block_toadd.SchoolID].remove_block(block_toadd)
+
         
         
     
