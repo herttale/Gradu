@@ -12,7 +12,7 @@ import random
 
 
 class SchoolDistr: 
-    """ todo: selitä attribuutit ja luokan tarkoitus, ehkä metodit
+    """ todo: selitä attribuutit ja luokan tarkoitus, ehkä metodit.
     blocks & ttmatrix täytyy olla dictejä
     
     
@@ -93,7 +93,9 @@ class SchoolDistr:
             self.zvalue += block.zvalue
              
         # lasketaan yhteen blocks-dictin z-valuet: Tehdään vain kerran alussa
-         # lisätään z-valueen uusi luku kun otetaan uusi ruutu tai vähennetään z-valuesta luku kun otetaan ruutu pois
+        # lisätään z-valueen uusi luku kun otetaan uusi ruutu tai vähennetään z-valuesta luku kun otetaan ruutu pois
+         
+         
     
     
     # laskee oppilaiden (6-8 v ?) hetkellisen määrän alueella
@@ -147,11 +149,11 @@ class SchoolDistr:
         if block == None:
             return
         else:
-            block.schoolDistr = self.shoolID
+            block.schoolDistr = self.schoolID
             self.blocks[block.ykrId] = block
-            self.zvalue = self.calculate_zvalue(block)
-            self.geometry = self.calculate_geometry()
-            self.students = self.calculate_studentbase()
+            self.calculate_zvalue(block) 
+            self.calculate_geometry()
+            self.calculate_studentbase()
             
         
     # poista ruutu blocks -dictistä 
@@ -164,9 +166,9 @@ class SchoolDistr:
             return
         else:
             del self.blocks[block.ykrId]
-            self.zvalue = self.calculate_zvalue(block, remove = True)
-            self.geometry = self.calculate_geometry()
-            self.students = self.calculate_studentbase()
+            self.calculate_zvalue(block, remove = True)
+            self.calculate_geometry()
+            self.calculate_studentbase()
     
     # Tämä tehdään aina sille distrille, jolta ruutua oltaisiin ottamassa. Testataan, että distrin 
     # geometrian tietotyyppi pysyy samana, mikäli yksi ruutu poistetaan (ettei polygonista tule multipolygon - lisättäessä tietotyyppi voi kuitenkin muuttua toiseen suuntaan)       
@@ -205,7 +207,7 @@ class SchoolDistr:
         
         bestBlock = None
                 
-        for block in blockset.items():
+        for block in blockset:
             
             # testataan hylkäysperiate 1
             if (block.studentBase + self.students) <= self.studentlimit:
@@ -263,7 +265,7 @@ class SchoolDistr:
                         blocklist.append(block)
         
         # generoidaan random numero sopivalta väliltä                
-        randomindx = random.randint(0,len(blocklist))
+        randomindx = random.randint(0,len(blocklist)-1)
         
         # palautetaan random block
         return blocklist[randomindx]

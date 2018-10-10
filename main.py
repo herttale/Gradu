@@ -75,15 +75,24 @@ for key, row in schools.iterrows():
     distr.calculate_geometry()
     distr.calculate_maxttime()
     distr.calculate_studentbase()
-    distr.calculate_zvalue(block = None)
+    distr.calculate_zvalue(None)
     distr.calculate_studentlimit()
     districts[row_schoolID] = distr
     
-################# Data is ready    
+################# Data is ready  
+# Ylemmässä loopissa: lähdetään uudelleen alkuperäisistä blockseista ja blockdictistä liikkeelle, eli edellisen iteraation tulosdicti ja Z täytyy tallentaa
+# ennen kuin ne ylikirjoitetaan uudella datanlukemisella. Iteraation tulosdicti kirjoitetaan edellisen päälle vain, jos se on edellistä parempi (lähempänä 
+# globaalia optimia). Seurataan Z-arvojen muutosta myös kirjaamalla ne aina listaan iteraation lopussa. Looppi pidetään käynnissä kiinteän määrän kertoja (esim. 20-100))
+#Upper_Zfactor = []
+#Upper_iteration = 0
+#
+#while True:
+    
+    
+    
+    
 
-
-
-# luodaan lista Zfactor, joka seuraa sdDictin z-arvojen muutosta. Alustetaan se districtsin z-arvojen itseisarvojen summalla.
+# luodaan lista Zfactor, joka seuraa sdDictin z-arvojen muutosta.
 Zfactor = []
 
 # luodaan kierroksia laskeva muuttuja. Sitä käytetään mm. määrittämään, milloin Zfactorin kehitystä aletaan tarkkailla ja suoritus voidaan pysäyttää.
@@ -92,6 +101,7 @@ iteration = 0
 # alustetaan todennäköisyyshomman kattoarvo
 ceil = 160
 
+ 
 # Iteroidan sdDictiä kunnes iteration on vähintään raja-arvo ja Zfactor ei enää muutu juurikaan pienemmäksi, jolloin palautetaan viimeinen tilanne ja break
 while True:
     
@@ -112,18 +122,17 @@ while True:
         
         if round(checkvalue, 4) == 0:
             
-            # muodostetaan palautettavat jutut
-            #palautetaan
-            break
-                       
+            # muutetaan break_cond Trueksi
+            # myöhemmin tässä palautetaan, kun tehty funktioksi, nyt breakataan ulommassa loopissa (2. while)
+            break    
+
+               
     #increase iteration
     iteration += 1
     
-   
-    
     
     #Iteroidaan kaikki districtit
-    for distr in districts:
+    for key, distr in districts.items():
         
         # arvo todennäköisyysluku, jos ceil on suurempi kuin 50, muuten randomint = 0 ja valitaan aina paras
         if ceil >= 50:
@@ -151,15 +160,15 @@ while True:
         
         
         # remove block from districts[block.SchoolID]
-        districts[block_toadd.SchoolID].remove_block(block_toadd)
+        districts[block_toadd.schoolID].remove_block(block_toadd)
 
         
         
     
     # joka iteraatiokierroksen lopussa ceiliä vähennetään 
     ceil -= 10
-
-
+    
+    
 
 
 
@@ -184,8 +193,8 @@ while True:
 #- contiguityn rikkoutumisen estäminen: täytyy olla oma metodi, joka täytyy aina suorittaa select best block -metodissa hylkäysperiaatteen tarkistamisena.
 #
 
-
-
+# jokin asia ennen select best/random blockin gontiguity checkin oldDistr.blocks[5938568.0] ia poistaa kyseisen blockin distrin blocksista (ekalla iteraatiolla)
+# contiguity check ja select best/ random block metodit toimii, eli vika ei niissä, myös touches_which toimii
 
 
 
