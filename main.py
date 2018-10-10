@@ -100,7 +100,7 @@ mainiteration = 0
 subiteration = 0
 
 # alustetaan todennäköisyyshomman kattoarvo
-ceil = 160
+ceil = 80
 
  
 # Iteroidan sdDictiä kunnes iteration on vähintään raja-arvo ja Zfactor ei enää muutu juurikaan pienemmäksi, jolloin palautetaan viimeinen tilanne ja break
@@ -117,9 +117,9 @@ while True:
     
     
     # test for breaking
-    if mainiteration >= 30: # huom, testaaminen voi alkaa vasta kun todennäköisyys valita random on ollut 0 jo useita kierroksia
+    if mainiteration >= 5: # huom, testaaminen voi alkaa vasta kun todennäköisyys valita random on ollut 0 jo useita kierroksia
          
-        checkvalue = st.mean(list(Zfactor[mainiteration], Zfactor[mainiteration-1], Zfactor[mainiteration-2], Zfactor[mainiteration-3])) - Zfactor[mainiteration]
+        checkvalue = st.mean([Zfactor[mainiteration], Zfactor[mainiteration-1], Zfactor[mainiteration-2], Zfactor[mainiteration-3]]) - Zfactor[mainiteration]
         
         if round(checkvalue, 4) == 0:
             
@@ -163,21 +163,19 @@ while True:
         ## tai sitten poista block_toadd muuttujaan julistaminen välistä!!!
 
         # tässä päivitetään myös blocks_dictiin tieto blockin uudesta disrtictistä, joka dictin ainoa muuttuva tieto
-        if block_toadd != None:
+
+
+        if block_toadd != None: # tämän myötä tyhjän lisäämistä / poistamista ei tarvitse käsitellä luokkametodissa
+           
+            # remove block from districts[block.SchoolID]
+            districts[block_toadd.schoolID].remove_block(block_toadd)
+        
             blocks_dict[block_toadd.ykrId].schoolID = key
             block_toadd.schoolID = key
         
-        # add block to original districts -dict
-        districts[key].add_block(block_toadd)
+            # add block to original districts -dict
+            districts[key].add_block(block_toadd)
         
-        # test
-        #print(len(districts[block_toadd.schoolID].blocks))
-        
-        # remove block from districts[block.SchoolID]
-        districts[block_toadd.schoolID].remove_block(block_toadd)
-        
-        # test
-        #print(len(districts[block_toadd.schoolID].blocks), "\n")
         
         l = []
         for k, item in districts[key].blocks.items(): 

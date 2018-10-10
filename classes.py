@@ -265,11 +265,12 @@ class SchoolDistr:
                         # lisätään blocklistiin
                         blocklist.append(block)
         
-        # generoidaan random numero sopivalta väliltä                
-        randomindx = random.randint(0,len(blocklist)-1)
-        
-        # palautetaan random block
-        return blocklist[randomindx]
+        if len(blocklist) > 0:
+            # generoidaan random numero sopivalta väliltä                
+            randomindx = random.randint(0,len(blocklist)-1)
+            
+            # palautetaan random block
+            return blocklist[randomindx]
 
 
 ###########################################################           
