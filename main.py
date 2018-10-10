@@ -133,7 +133,7 @@ while True:
     
     
     #Iteroidaan kaikki districtit
-    for key, distr in districts.items():
+    for key in list(districts.keys()):
         
         subiteration += 1
         
@@ -147,16 +147,16 @@ while True:
             randomint = 0
             
         # check what distr touches
-        blist = distr.touches_which(blocks_dict)
+        blist = districts[key].touches_which(blocks_dict)
         
         # select best or random block based on randomint
         if randomint > 50:
             
-            block_toadd = distr.select_random_block(blist, districts)
+            block_toadd = districts[key].select_random_block(blist, districts)
             
         else:
             
-            block_toadd = distr.select_best_block(blist, districts)
+            block_toadd = districts[key].select_best_block(blist, districts)
         
         
         ## FIXME koita tässä muuttaa mainin sisällä block_toadd'in vastaavaan alkuperäiseen blockiin!!! schoolID ja samalla schoolID myös blocks_dictin instansseihin jne! 
@@ -164,18 +164,27 @@ while True:
 
         # tässä päivitetään myös blocks_dictiin tieto blockin uudesta disrtictistä, joka dictin ainoa muuttuva tieto
         if block_toadd != None:
-            blocks_dict[block_toadd.ykrId].schoolID = distr.schoolID
-            block_toadd.schoolID = distr.schoolID
+            blocks_dict[block_toadd.ykrId].schoolID = key
+            block_toadd.schoolID = key
         
-        # add block to distr
-        distr.add_block(block_toadd)
+        # add block to original districts -dict
+        districts[key].add_block(block_toadd)
         
+        # test
+        #print(len(districts[block_toadd.schoolID].blocks))
         
         # remove block from districts[block.SchoolID]
         districts[block_toadd.schoolID].remove_block(block_toadd)
-
         
+        # test
+        #print(len(districts[block_toadd.schoolID].blocks), "\n")
         
+        l = []
+        for k, item in districts[key].blocks.items(): 
+            l.append(item.schoolID)
+            
+        print(set(l))
+        print('\n')
     
     # joka iteraatiokierroksen lopussa ceiliä vähennetään 
     ceil -= 10
@@ -205,12 +214,11 @@ while True:
 #- contiguityn rikkoutumisen estäminen: täytyy olla oma metodi, joka täytyy aina suorittaa select best block -metodissa hylkäysperiaatteen tarkistamisena.
 #
 
-# jokin asia ennen select best/random blockin gontiguity checkin oldDistr.blocks[5938568.0] ia poistaa kyseisen blockin distrin blocksista (n 20. subiteraatiolla)
-# contiguity check ja select best/ random block metodit toimii, eli vika ei niissä, myös touches_which toimii
+#
+# remove toimii
+# jostain syystä block.schoolID ei päivity ja siksi blockin lisäämisen jälkeen self.blocksin blockseissa on keskenään eri schoolID:n omaavia blockseja....
 
-
-
-
+#114439
 
 
 

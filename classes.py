@@ -150,6 +150,7 @@ class SchoolDistr:
             return
         else:
             block.schoolID = self.schoolID
+            
             self.blocks[block.ykrId] = block
             self.calculate_zvalue(block) 
             self.calculate_geometry()
@@ -192,7 +193,7 @@ class SchoolDistr:
             
         geom2 = cascaded_union(geomList)
         
-        # palauttaa True jos tietotyyppi muuttu poiston seurauksena
+        # palauttaa True jos tietotyyppi muuttuu poiston seurauksena
         return type(geom1) != type(geom2)
             
         
