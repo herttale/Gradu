@@ -130,7 +130,7 @@ while True:
                
     #increase iteration
     mainiteration += 1
-    
+    print("mainiteration round:", mainiteration)
     
     #Iteroidaan kaikki districtit
     for key in list(districts.keys()):
@@ -177,12 +177,12 @@ while True:
             districts[key].add_block(block_toadd)
         
         
-        l = []
-        for k, item in districts[key].blocks.items(): 
-            l.append(item.schoolID)
-            
-        print(set(l))
-        print('\n')
+#        l = []
+#        for k, item in districts[key].blocks.items(): 
+#            l.append(item.schoolID)
+#            
+#        print(set(l))
+#        print('\n')
     
     # joka iteraatiokierroksen lopussa ceiliä vähennetään 
     ceil -= 10
