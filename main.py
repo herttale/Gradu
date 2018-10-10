@@ -96,7 +96,8 @@ for key, row in schools.iterrows():
 Zfactor = []
 
 # luodaan kierroksia laskeva muuttuja. Sitä käytetään mm. määrittämään, milloin Zfactorin kehitystä aletaan tarkkailla ja suoritus voidaan pysäyttää.
-iteration = 0
+mainiteration = 0
+subiteration = 0
 
 # alustetaan todennäköisyyshomman kattoarvo
 ceil = 160
@@ -116,9 +117,9 @@ while True:
     
     
     # test for breaking
-    if iteration >= 30: # huom, testaaminen voi alkaa vasta kun todennäköisyys valita random on ollut 0 jo useita kierroksia
+    if mainiteration >= 30: # huom, testaaminen voi alkaa vasta kun todennäköisyys valita random on ollut 0 jo useita kierroksia
          
-        checkvalue = st.mean(list(Zfactor[iteration], Zfactor[iteration-1], Zfactor[iteration-2], Zfactor[iteration-3])) - Zfactor[iteration]
+        checkvalue = st.mean(list(Zfactor[mainiteration], Zfactor[mainiteration-1], Zfactor[mainiteration-2], Zfactor[mainiteration-3])) - Zfactor[mainiteration]
         
         if round(checkvalue, 4) == 0:
             
@@ -128,11 +129,13 @@ while True:
 
                
     #increase iteration
-    iteration += 1
+    mainiteration += 1
     
     
     #Iteroidaan kaikki districtit
     for key, distr in districts.items():
+        
+        subiteration += 1
         
         # arvo todennäköisyysluku, jos ceil on suurempi kuin 50, muuten randomint = 0 ja valitaan aina paras
         if ceil >= 50:
@@ -154,6 +157,15 @@ while True:
         else:
             
             block_toadd = distr.select_best_block(blist, districts)
+        
+        
+        ## FIXME koita tässä muuttaa mainin sisällä block_toadd'in vastaavaan alkuperäiseen blockiin!!! schoolID ja samalla schoolID myös blocks_dictin instansseihin jne! 
+        ## tai sitten poista block_toadd muuttujaan julistaminen välistä!!!
+
+        # tässä päivitetään myös blocks_dictiin tieto blockin uudesta disrtictistä, joka dictin ainoa muuttuva tieto
+        if block_toadd != None:
+            blocks_dict[block_toadd.ykrId].schoolID = distr.schoolID
+            block_toadd.schoolID = distr.schoolID
         
         # add block to distr
         distr.add_block(block_toadd)
@@ -193,7 +205,7 @@ while True:
 #- contiguityn rikkoutumisen estäminen: täytyy olla oma metodi, joka täytyy aina suorittaa select best block -metodissa hylkäysperiaatteen tarkistamisena.
 #
 
-# jokin asia ennen select best/random blockin gontiguity checkin oldDistr.blocks[5938568.0] ia poistaa kyseisen blockin distrin blocksista (ekalla iteraatiolla)
+# jokin asia ennen select best/random blockin gontiguity checkin oldDistr.blocks[5938568.0] ia poistaa kyseisen blockin distrin blocksista (n 20. subiteraatiolla)
 # contiguity check ja select best/ random block metodit toimii, eli vika ei niissä, myös touches_which toimii
 
 

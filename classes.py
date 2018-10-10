@@ -149,7 +149,7 @@ class SchoolDistr:
         if block == None:
             return
         else:
-            block.schoolDistr = self.schoolID
+            block.schoolID = self.schoolID
             self.blocks[block.ykrId] = block
             self.calculate_zvalue(block) 
             self.calculate_geometry()
