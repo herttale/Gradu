@@ -302,4 +302,9 @@ class Block:
 
 ### TODO:
 # selecting a new block and removing it from schoolDistr should not be able to break contiguity rule DONE
-# in order to find the global optimum, there should be a diminishing chance to choose a random block instead of best block: make method select_random_block
+# in order to find the global optimum, there should be a diminishing chance to choose a random block instead of best block: make method select_random_block DONE
+# # contiguity check ei toimi jostain syystä! Korjaa!!!
+# inside selectbest/select_random, check that the blocks actually containing the school building itself can not chance the district: block must have a new attribut self.containsSchool
+# divide the multipolygon in the data to two separate entities
+# make a gif of the process: plot either every 10th or 20th iteration 
+# share the execution to multiple prosessors

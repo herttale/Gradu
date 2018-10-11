@@ -186,11 +186,21 @@ while True:
     
     # joka iteraatiokierroksen lopussa ceiliä vähennetään 
     ceil -= 10
+
+import matplotlib.pyplot as plt    
     
+resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry'], geometry = "geometry")
+for key, item in districts.items():
+    resultframe = resultframe.append({'key': key, 'geometry' : item.geometry}, ignore_index=True)
     
+resultframe.plot(column = 'key', linewidth=1.5)
 
 
-
+origframe = gpd.GeoDataFrame(columns= ['key', 'geometry'], geometry = "geometry")
+for key, item in districts.items():
+    origframe = origframe.append({'key': key, 'geometry' : item.geometry}, ignore_index=True)
+    
+origframe.plot(column = 'key', linewidth=1.5)
 
 #Idealista
 #
@@ -216,7 +226,7 @@ while True:
 # remove toimii
 # jostain syystä block.schoolID ei päivity ja siksi blockin lisäämisen jälkeen self.blocksin blockseissa on keskenään eri schoolID:n omaavia blockseja....
 
-#114439
+# contiguity check ei toimi jostain syystä!
 
 
 
