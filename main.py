@@ -100,7 +100,7 @@ mainiteration = 0
 subiteration = 0
 
 # alustetaan todennäköisyyshomman kattoarvo
-ceil = 80
+ceil = 160
 
  
 # Iteroidan sdDictiä kunnes iteration on vähintään raja-arvo ja Zfactor ei enää muutu juurikaan pienemmäksi, jolloin palautetaan viimeinen tilanne ja break
@@ -117,11 +117,11 @@ while True:
     
     
     # test for breaking
-    if mainiteration >= 5: # huom, testaaminen voi alkaa vasta kun todennäköisyys valita random on ollut 0 jo useita kierroksia
+    if mainiteration >= 30: # huom, testaaminen voi alkaa vasta kun todennäköisyys valita random on ollut 0 jo useita kierroksia
          
-        checkvalue = st.mean([Zfactor[mainiteration], Zfactor[mainiteration-1], Zfactor[mainiteration-2], Zfactor[mainiteration-3]]) - Zfactor[mainiteration]
+        checkvalue = st.mean([Zfactor[mainiteration], Zfactor[mainiteration-1], Zfactor[mainiteration-2], Zfactor[mainiteration-3], Zfactor[mainiteration-4]]) - Zfactor[mainiteration]
         
-        if round(checkvalue, 4) == 0:
+        if round(checkvalue, 5) == 0:
             
             # muutetaan break_cond Trueksi
             # myöhemmin tässä palautetaan, kun tehty funktioksi, nyt breakataan ulommassa loopissa (2. while)
@@ -185,13 +185,18 @@ while True:
 #        print('\n')
     
     # joka iteraatiokierroksen lopussa ceiliä vähennetään 
-    ceil -= 10
+    ceil -= 5
+
+
+
+
+
 
 import matplotlib.pyplot as plt    
     
-resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry'], geometry = "geometry")
+resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
 for key, item in districts.items():
-    resultframe = resultframe.append({'key': key, 'geometry' : item.geometry}, ignore_index=True)
+    resultframe = resultframe.append({'key': key, 'geometry' : item.geometry, 'zvalue' : item.zvalue}, ignore_index=True)
     
 resultframe.plot(column = 'key', linewidth=1.5)
 

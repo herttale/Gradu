@@ -8,6 +8,7 @@ Created on Fri Sep  7 10:51:21 2018
 from shapely.ops import cascaded_union
 from copy import deepcopy
 import random
+from shapely.geometry import LineString
 
 
 
@@ -73,10 +74,32 @@ class SchoolDistr:
             if ttime > maxt:
                 maxt = ttime
         
-        self.maxttime = maxt * 1.5
+        self.maxttime = maxt * 100 # 1.5? 2?
         
         
-    # laske z-arvo 
+#    # OLD, sum-based
+#    laske z-arvo 
+#    def calculate_zvalue(self, block, remove = False):
+#        
+#        #if self.zvalue == None: # jos operaatio tehdään ensimmäistä kertaa
+#        if block == None:
+#            Zsum = 0
+#            for key, value in self.blocks.items():
+#                Zsum += value.zvalue
+#            self.zvalue = Zsum
+#        
+#        elif remove == True and block != None:
+#            self.zvalue -= block.zvalue
+#            
+#        elif remove == False and block != None: # kun myöhemmin lisätään tai poistetaan ruutuja
+#            self.zvalue += block.zvalue
+#             
+#        # lasketaan yhteen blocks-dictin z-valuet: Tehdään vain kerran alussa
+#        # lisätään z-valueen uusi luku kun otetaan uusi ruutu tai vähennetään z-valuesta luku kun otetaan ruutu pois
+         
+ 
+
+    # laske z-arvo,new average-based
     def calculate_zvalue(self, block, remove = False):
         
         #if self.zvalue == None: # jos operaatio tehdään ensimmäistä kertaa
@@ -84,18 +107,16 @@ class SchoolDistr:
             Zsum = 0
             for key, value in self.blocks.items():
                 Zsum += value.zvalue
-            self.zvalue = Zsum
+            self.zvalue = Zsum/len(self.blocks)
         
         elif remove == True and block != None:
-            self.zvalue -= block.zvalue
+            self.zvalue = (self.zvalue * len(self.blocks) - block.zvalue) / len(self.blocks)
             
         elif remove == False and block != None: # kun myöhemmin lisätään tai poistetaan ruutuja
-            self.zvalue += block.zvalue
+            self.zvalue = (self.zvalue * len(self.blocks) + block.zvalue) / len(self.blocks)
              
         # lasketaan yhteen blocks-dictin z-valuet: Tehdään vain kerran alussa
-        # lisätään z-valueen uusi luku kun otetaan uusi ruutu tai vähennetään z-valuesta luku kun otetaan ruutu pois
-         
-         
+        # lisätään z-valueen uusi luku kun otetaan uusi ruutu tai vähennetään z-valuesta luku kun otetaan ruutu pois        
     
     
     # laskee oppilaiden (6-8 v ?) hetkellisen määrän alueella
@@ -108,9 +129,10 @@ class SchoolDistr:
 
         self.students = studentSum
         
+  
     def calculate_studentlimit(self):
         
-        self.studentlimit = self.students * 1.25
+        self.studentlimit = self.students * 10000 # 1.5? 2?
     
               
     # mitä ruutuja instanssi sivuaa (koskee). Palauttaa LISTAN
@@ -120,12 +142,11 @@ class SchoolDistr:
         # tämä metodi palauttaa ne ruudut, joita self koskee (sivuaa)
         # tämä tehdään joka iteraation joka vuorolla
         # mieti, onko queen contiguity ongelma .touches() -metodissa
-        # MAINISSA TÄYTYY OLLA OK JOS PALAUTUSARVO ON TYHJÄ, ELI EI KOSKETETA MITÄÄN
+        # TÄYTYY OLLA OK JOS PALAUTUSARVO ON TYHJÄ, ELI EI KOSKETETA MITÄÄN
         neighbors = []
         
         for key, block in blocks_dict.items():
-            bGeo = block.geometry
-            if bGeo.touches(self.geometry):
+            if type(self.geometry.intersection(block.geometry)) == LineString:
                 neighbors.append(block)
         
         return neighbors
@@ -207,6 +228,7 @@ class SchoolDistr:
         # lopuksi palautetaan paras ruutu tai tyhjä arvo
         
         bestBlock = None
+        Z = None
                 
         for block in blockset:
             
@@ -228,17 +250,23 @@ class SchoolDistr:
                         # kun bestBlock on tyhjä, verrataan alueen self.zvalueen
                         if bestBlock == None:
                            
-                            # jos block.zvalue ja self.zvalue -summan itseisarvo on pienempi tai yhtäsuuri kuin self.zvalue yksin, block = bestBlock
-                            if abs(block.zvalue + self.zvalue) <= abs(self.zvalue):
+                            # jos block.zvalue ja self.zvalue -summan itseisarvo on pienempi tai yhtäsuuri kuin self.zvalue yksin, block = bestBlock FIXME
+                            #if abs(block.zvalue + self.zvalue) <= abs(self.zvalue):
+                            value = abs((self.zvalue * len(self.blocks) + block.zvalue)) / len(self.blocks)
+                            
+                            if value  <= abs(self.zvalue):
                                 
                                 bestBlock = block
+                                Z = value
                         
-                        # kun bestBlock ei ole tyhjä, verrataan bestblockin zvaluen ja self.zvaluen summan itseisarvoon
+                        # kun bestBlock ei ole tyhjä, verrataan bestblockin zvaluen ja self.zvaluen keskiarvon itseisarvoon
                         else:
                             
-                            if abs(block.zvalue + self.zvalue) < abs(bestBlock.zvalue + self.zvalue):
+                            value =  abs((self.zvalue * len(self.blocks) + block.zvalue) / len(self.blocks)) 
+                            if value <= Z:
                                 
                                 bestBlock = block
+                                Z = value
                         
         return bestBlock
     
@@ -303,8 +331,9 @@ class Block:
 ### TODO:
 # selecting a new block and removing it from schoolDistr should not be able to break contiguity rule DONE
 # in order to find the global optimum, there should be a diminishing chance to choose a random block instead of best block: make method select_random_block DONE
-# # contiguity check ei toimi jostain syystä! Korjaa!!!
-# inside selectbest/select_random, check that the blocks actually containing the school building itself can not chance the district: block must have a new attribut self.containsSchool
-# divide the multipolygon in the data to two separate entities
+# contiguity check ei toimi jostain syystä! Korjaa!!! -> touches_which ja add tekee yhdessä multipolygoneja?! Touchesiin riittää vain kulmien koskettaminen, ja sen jälkeen kun lasketaan uusi geometria on tuloksena multipolygon..
+### https://stackoverflow.com/questions/1960961/polygon-touches-in-more-than-one-point-with-shapely
+# inside selectbest/select_random, check that the blocks actually containing the school building itself can not chance the district: block must have a new attribute self.containsSchool
+# divide the one multipolygon in the data to two separate entities, also fix the data so that there won't be other multipolys
 # make a gif of the process: plot either every 10th or 20th iteration 
 # share the execution to multiple prosessors
