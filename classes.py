@@ -74,7 +74,7 @@ class SchoolDistr:
             if ttime > maxt:
                 maxt = ttime
         
-        self.maxttime = maxt * 100 # 1.5? 2?
+        self.maxttime = maxt * 2 # 1.5? 2?
         
         
 #    # OLD, sum-based
@@ -112,7 +112,7 @@ class SchoolDistr:
         elif remove == True and block != None:
             self.zvalue = (self.zvalue * len(self.blocks) - block.zvalue) / len(self.blocks)
             
-        elif remove == False and block != None: # kun myöhemmin lisätään tai poistetaan ruutuja
+        elif remove == False and block != None: # kun myöhemmin lisätään ruutuja
             self.zvalue = (self.zvalue * len(self.blocks) + block.zvalue) / len(self.blocks)
              
         # lasketaan yhteen blocks-dictin z-valuet: Tehdään vain kerran alussa
@@ -132,7 +132,7 @@ class SchoolDistr:
   
     def calculate_studentlimit(self):
         
-        self.studentlimit = self.students * 10000 # 1.5? 2?
+        self.studentlimit = self.students * 2 # 1.5? 2?
     
               
     # mitä ruutuja instanssi sivuaa (koskee). Palauttaa LISTAN
@@ -228,7 +228,15 @@ class SchoolDistr:
         # lopuksi palautetaan paras ruutu tai tyhjä arvo
         
         bestBlock = None
-        Z = None
+
+        zdict = {}
+        
+        actual_zfactor = 0
+        bestblock_zfactor = 0
+        
+        for key, v in districts.items(): 
+            zdict[key] = v.zvalue
+            actual_zfactor += abs(v.zvalue)        
                 
         for block in blockset:
             
@@ -252,21 +260,45 @@ class SchoolDistr:
                            
                             # jos block.zvalue ja self.zvalue -summan itseisarvo on pienempi tai yhtäsuuri kuin self.zvalue yksin, block = bestBlock FIXME
                             #if abs(block.zvalue + self.zvalue) <= abs(self.zvalue):
-                            value = abs((self.zvalue * len(self.blocks) + block.zvalue)) / len(self.blocks)
+                            #value = (self.zvalue * len(self.blocks) + block.zvalue) / len(self.blocks)
                             
-                            if value  <= abs(self.zvalue):
+                            #if abs(value)  < abs(self.zvalue):
+                            
+                            # kokeile globaali laskenta
+
+
+                            zcopy = deepcopy(zdict)
+                            
+                            zcopy[self.schoolID] = (self.zvalue * len(self.blocks) + block.zvalue) / len(self.blocks)
+                            zcopy[block.schoolID] = (oldDistr.zvalue * len(oldDistr.blocks) - block.zvalue) / len(oldDistr.blocks)
+                            
+                            zfactor2 = 0
+                            for key, v in zcopy.items():
+                                zfactor2 += abs(v)
                                 
+                            if abs(zfactor2)  < abs(actual_zfactor):
                                 bestBlock = block
-                                Z = value
+                                bestblock_zfactor = zfactor2
                         
-                        # kun bestBlock ei ole tyhjä, verrataan bestblockin zvaluen ja self.zvaluen keskiarvon itseisarvoon
+                        ## kun bestBlock ei ole tyhjä, verrataan bestblockin zvaluen ja self.zvaluen keskiarvon itseisarvoon
                         else:
                             
-                            value =  abs((self.zvalue * len(self.blocks) + block.zvalue) / len(self.blocks)) 
-                            if value <= Z:
+                            #value =  (self.zvalue * len(self.blocks) + block.zvalue) / len(self.blocks) 
+                            #if abs(value) < abs((self.zvalue * len(self.blocks) + bestBlock.zvalue) / len(self.blocks)) :
+                            zcopy = deepcopy(zdict)
+                            
+                            zcopy[self.schoolID] = (self.zvalue * len(self.blocks) + block.zvalue) / len(self.blocks)
+                            zcopy[block.schoolID] = (oldDistr.zvalue * len(oldDistr.blocks) - block.zvalue) / len(oldDistr.blocks)
+                            
+                            zfactor2 = 0
+                            for key, v in zcopy.items():
+                                zfactor2 += abs(v)
                                 
+                            if abs(zfactor2)  < abs(bestblock_zfactor):
                                 bestBlock = block
-                                Z = value
+                                bestblock_zfactor = zfactor2                                
+                                
+                                
                         
         return bestBlock
     
@@ -326,14 +358,25 @@ class Block:
     
 
         
+### DONE:
         
-
-### TODO:
 # selecting a new block and removing it from schoolDistr should not be able to break contiguity rule DONE
 # in order to find the global optimum, there should be a diminishing chance to choose a random block instead of best block: make method select_random_block DONE
 # contiguity check ei toimi jostain syystä! Korjaa!!! -> touches_which ja add tekee yhdessä multipolygoneja?! Touchesiin riittää vain kulmien koskettaminen, ja sen jälkeen kun lasketaan uusi geometria on tuloksena multipolygon..
 ### https://stackoverflow.com/questions/1960961/polygon-touches-in-more-than-one-point-with-shapely
+# corrcted the z-value to be mean-based
+        
+### TODO:
+
 # inside selectbest/select_random, check that the blocks actually containing the school building itself can not chance the district: block must have a new attribute self.containsSchool
 # divide the one multipolygon in the data to two separate entities, also fix the data so that there won't be other multipolys
 # make a gif of the process: plot either every 10th or 20th iteration 
 # share the execution to multiple prosessors
+        
+        
+        
+# corrcted the z-value to be mean-based. The problem now is, that the blocks with 0 -zvalue are attractive. Should change the 0 blocks to none, and only add them as "secondary"?
+## there could be a 20% chance that a district will select a secondary block?
+## in this case, None values should be handled in calculate z-value
+        
+# make some kind of a check for polygon diameter / area, to make shapes less weird 

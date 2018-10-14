@@ -100,7 +100,7 @@ mainiteration = 0
 subiteration = 0
 
 # alustetaan todennäköisyyshomman kattoarvo
-ceil = 160
+ceil = 50
 
  
 # Iteroidan sdDictiä kunnes iteration on vähintään raja-arvo ja Zfactor ei enää muutu juurikaan pienemmäksi, jolloin palautetaan viimeinen tilanne ja break
@@ -117,9 +117,9 @@ while True:
     
     
     # test for breaking
-    if mainiteration >= 30: # huom, testaaminen voi alkaa vasta kun todennäköisyys valita random on ollut 0 jo useita kierroksia
+    if mainiteration >= 12: # huom, testaaminen voi alkaa vasta kun todennäköisyys valita random on ollut 0 jo muutamia kierroksia
          
-        checkvalue = st.mean([Zfactor[mainiteration], Zfactor[mainiteration-1], Zfactor[mainiteration-2], Zfactor[mainiteration-3], Zfactor[mainiteration-4]]) - Zfactor[mainiteration]
+        checkvalue = st.mean([Zfactor[mainiteration], Zfactor[mainiteration-1], Zfactor[mainiteration-2], Zfactor[mainiteration-3]]) - Zfactor[mainiteration]
         
         if round(checkvalue, 5) == 0:
             
@@ -130,7 +130,8 @@ while True:
                
     #increase iteration
     mainiteration += 1
-    print("mainiteration round:", mainiteration)
+    print("mainiteration round:", mainiteration, ', current zvalue:', Z)
+    
     
     #Iteroidaan kaikki districtit
     for key in list(districts.keys()):
@@ -185,20 +186,23 @@ while True:
 #        print('\n')
     
     # joka iteraatiokierroksen lopussa ceiliä vähennetään 
-    ceil -= 5
+    ceil -= 10
 
 
 
 
-
+for key, v in districts.items(): print(key, v.zvalue)
 
 import matplotlib.pyplot as plt    
+
+plt.plot(Zfactor)
     
 resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
 for key, item in districts.items():
     resultframe = resultframe.append({'key': key, 'geometry' : item.geometry, 'zvalue' : item.zvalue}, ignore_index=True)
     
 resultframe.plot(column = 'key', linewidth=1.5)
+resultframe.plot(column = 'zvalue', linewidth=1.5, cmap = 'plasma')
 
 
 origframe = gpd.GeoDataFrame(columns= ['key', 'geometry'], geometry = "geometry")
