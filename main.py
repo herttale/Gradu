@@ -111,7 +111,7 @@ while True:
     Z = 0
     
     for key, value in districts.items():
-        Z += abs(value.zvalue)
+        Z += value.zvalue**3
     
     Zfactor.append(Z)
     

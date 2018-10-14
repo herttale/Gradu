@@ -107,7 +107,7 @@ class SchoolDistr:
             Zsum = 0
             for key, value in self.blocks.items():
                 Zsum += value.zvalue
-            self.zvalue = Zsum/len(self.blocks)
+            self.zvalue = Zsum/len(self.blocks)*10 # Huom! tämä *100 lisätty **2 kertomista varten
         
         elif remove == True and block != None:
             self.zvalue = (self.zvalue * len(self.blocks) - block.zvalue) / len(self.blocks)
@@ -236,7 +236,7 @@ class SchoolDistr:
         
         for key, v in districts.items(): 
             zdict[key] = v.zvalue
-            actual_zfactor += abs(v.zvalue)        
+            actual_zfactor += v.zvalue**3        
                 
         for block in blockset:
             
@@ -274,9 +274,9 @@ class SchoolDistr:
                             
                             zfactor2 = 0
                             for key, v in zcopy.items():
-                                zfactor2 += abs(v)
+                                zfactor2 += v**3
                                 
-                            if abs(zfactor2)  < abs(actual_zfactor):
+                            if zfactor2  < actual_zfactor:
                                 bestBlock = block
                                 bestblock_zfactor = zfactor2
                         
@@ -292,9 +292,9 @@ class SchoolDistr:
                             
                             zfactor2 = 0
                             for key, v in zcopy.items():
-                                zfactor2 += abs(v)
+                                zfactor2 += v**3
                                 
-                            if abs(zfactor2)  < abs(bestblock_zfactor):
+                            if zfactor2  < bestblock_zfactor:
                                 bestBlock = block
                                 bestblock_zfactor = zfactor2                                
                                 
@@ -380,3 +380,7 @@ class Block:
 ## in this case, None values should be handled in calculate z-value
         
 # make some kind of a check for polygon diameter / area, to make shapes less weird 
+        
+# the optimization must be some kind of compromize between local & global optimum
+
+# the optimization cannot base on block's z-values, but the block should have the absolute population variables as parameters. the z-values should be calculated as district-based value, basing on real population values
