@@ -5,7 +5,7 @@ Created on Fri Jul 27 18:33:29 2018
 
 @author: hertta
 """
-
+import numpy as np
 import geopandas as gpd
 import pandas as pd
 import math
@@ -17,15 +17,22 @@ from classes import SchoolDistr
 rttk = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/wrangled_rttk.shp", encoding = "UTF-8")
 schools = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/koulut_euref_ykr.shp", encoding = "UTF-8")
 
+
+
+
+
+rttk_filtered = rttk.loc[rttk['ki_muu'] > -1, :]
+globalZ = sum(rttk_filtered['ki_muu'])/sum(rttk_filtered['ki_vakiy'])
+rttk.loc[rttk['ki_muu'] == -1, 'ki_muu'] = 0
+rttk.loc[rttk['ki_fi'] == -1, 'ki_fi'] = 0
+rttk.loc[rttk['ki_sv'] == -1, 'ki_sv'] = 0
+#rttk.loc[rttk['ki_vakiy'] == -1, 'ki_vakiy'] = 0
+
 # for testing purposes, create a new column in rttk including "pupils": 0.2 * ki_vakiy. In next versions this must be done when generating the data (rttk_wrangling)
 rttk['pupils'] = rttk['ki_vakiy']*0.15
 for key, row in rttk.iterrows():
     if row['pupils'] < 0:
         rttk.loc[key,'pupils'] = 0
-
-
-
-
 
 # group rttk
 rttk = rttk.set_index(keys = 'YKR_ID', drop = False)
@@ -36,6 +43,7 @@ rttk_grouped = rttk.groupby(by = 'ID')
 
 districts = {}
 blocks_dict = {}
+
 
 for key, row in schools.iterrows():
     
@@ -66,7 +74,7 @@ for key, row in schools.iterrows():
     blocksframe = rttk_grouped.get_group(row_schoolID)
     blocks = {}
     for key, row in blocksframe.iterrows():
-        block = Block(geometry = row['geometry'], ykrId = row['YKR_ID'] , zvalue = row['z-value'], studentBase = row['pupils'], schoolID = row_schoolID)
+        block = Block(geometry = row['geometry'], ykrId = row['YKR_ID'], studentBase = row['pupils'], langFiSve = row['ki_fi'] + row['ki_sv'], langOther = row['ki_muu'], schoolID = row_schoolID)
         blocks[row['YKR_ID']] = block
         blocks_dict[row['YKR_ID']] = block
     
@@ -75,9 +83,11 @@ for key, row in schools.iterrows():
     distr.calculate_geometry()
     distr.calculate_maxttime()
     distr.calculate_studentbase()
-    distr.calculate_zvalue(None)
+    distr.calculate_zvalue()
     distr.calculate_studentlimit()
     districts[row_schoolID] = distr
+    
+
     
 ################# Data is ready  
 # Ylemmässä loopissa: lähdetään uudelleen alkuperäisistä blockseista ja blockdictistä liikkeelle, eli edellisen iteraation tulosdicti ja Z täytyy tallentaa
@@ -102,6 +112,18 @@ subiteration = 0
 # alustetaan todennäköisyyshomman kattoarvo
 ceil = 50
 
+# lasketaan globaali muunkielisten osuuden keskiarvo ja keskihajonta alueilla
+
+stdev_list = []
+
+for key, item in districts.items():
+    stdev_list.append(item.zvalue)
+
+# keskiarvo
+globalMean = sum(stdev_list)/len(districts)
+
+# keskihajonta
+globalStDev = np.std(stdev_list, ddof = 0)
  
 # Iteroidan sdDictiä kunnes iteration on vähintään raja-arvo ja Zfactor ei enää muutu juurikaan pienemmäksi, jolloin palautetaan viimeinen tilanne ja break
 while True:
@@ -111,7 +133,7 @@ while True:
     Z = 0
     
     for key, value in districts.items():
-        Z += value.zvalue**3
+        Z += abs((value.zvalue-globalMean)/ globalStDev)
     
     Zfactor.append(Z)
     
@@ -157,7 +179,7 @@ while True:
             
         else:
             
-            block_toadd = districts[key].select_best_block(blist, districts)
+            block_toadd = districts[key].select_best_block(blist, districts, globalMean, globalStDev)
         
         
         ## FIXME koita tässä muuttaa mainin sisällä block_toadd'in vastaavaan alkuperäiseen blockiin!!! schoolID ja samalla schoolID myös blocks_dictin instansseihin jne! 
@@ -199,10 +221,18 @@ plt.plot(Zfactor)
     
 resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
 for key, item in districts.items():
-    resultframe = resultframe.append({'key': key, 'geometry' : item.geometry, 'zvalue' : item.zvalue}, ignore_index=True)
+    resultframe = resultframe.append({'key': key, 'geometry' : item.geometry, 'zvalue' : abs((item.zvalue-globalMean)/ globalStDev)}, ignore_index=True)
+    print(key, abs((item.zvalue-globalMean)/ globalStDev))
+
     
 resultframe.plot(column = 'key', linewidth=1.5)
 resultframe.plot(column = 'zvalue', linewidth=1.5, cmap = 'plasma')
+
+
+resultframe = resultframe.set_geometry('geometry')
+resultframe.crs = '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs'
+
+resultframe.to_file("/home/hertta/Documents/Gradu/tuloksia/optimated_districts_rand1.shp") 
 
 
 origframe = gpd.GeoDataFrame(columns= ['key', 'geometry'], geometry = "geometry")
