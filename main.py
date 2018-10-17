@@ -221,8 +221,8 @@ plt.plot(Zfactor)
     
 resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
 for key, item in districts.items():
-    resultframe = resultframe.append({'key': key, 'geometry' : item.geometry, 'zvalue' : abs((item.zvalue-globalMean)/ globalStDev)}, ignore_index=True)
-    print(key, abs((item.zvalue-globalMean)/ globalStDev))
+    resultframe = resultframe.append({'key': key, 'geometry' : item.geometry, 'zvalue' : (item.zvalue-globalMean)/ globalStDev}, ignore_index=True)
+    print(key, (item.zvalue-globalMean)/ globalStDev)
 
     
 resultframe.plot(column = 'key', linewidth=1.5)

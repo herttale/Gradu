@@ -385,7 +385,7 @@ class SchoolDistr:
 #        return bestBlock
 
 
-    # LOCAL version with global check
+    # LOCAL version with global check FIXME jos alueen itsensä arvo on vielä huonompi kuin alueen, jolta ryöstettäisi, pitäisi vaihdoksen olla mahdollinen!!!
     def select_best_block(self, blockset, districts, globalMean, globalStDev):
         
         
@@ -425,26 +425,30 @@ class SchoolDistr:
                         old_newZ = (old_otherSum - block.langOther) / (old_otherSum - block.langOther + old_fiSveSum - block.langFiSve)
                         old_currentZ = (old_otherSum) / (old_otherSum + old_fiSveSum)
                         
-                        # jos vanhan distrin uusi z-arvo on pienempi tai yhtäsuuri kuin vanha tai vanhan distrin vanha z-arvo on alle 1, 0.5 tms.
-                        if ((old_newZ - globalMean) / globalStDev) <= ((old_currentZ - globalMean) / globalStDev) or ((old_currentZ - globalMean) / globalStDev) < 0.5:
 
-                            # testataan onko uusi parempi kuin tämänhetkinen self -z-arvo
-                            
-                            # kun bestBlock on tyhjä, verrataan alueen self.zvalueen
-                            if bestBlock == None:       
-                            
-                                newZ_1 = (otherSum + block.langOther) / (otherSum + block.langOther + fiSveSum + block.langFiSve)
+                        # testataan onko uusi parempi kuin tämänhetkinen self -z-arvo
+                        
+                        # kun bestBlock on tyhjä, verrataan alueen self.zvalueen
+                        if bestBlock == None:       
+                        
+                            newZ_1 = (otherSum + block.langOther) / (otherSum + block.langOther + fiSveSum + block.langFiSve)
                                 
+                            # jos vanhan distrin uusi z-arvo on pienempi tai yhtäsuuri kuin vanha tai vanhan distrin vanhan z-arvon ja uuden distrin vanhan z-arvon itseisarvonjen erotus on suurempi kuin vastaava uusilla
+                            if (((old_newZ - globalMean) / globalStDev) <= ((old_currentZ - globalMean) / globalStDev)) or abs(((old_currentZ - globalMean) / globalStDev) - ((self.zvalue - globalMean) / globalStDev)) > abs(((old_newZ - globalMean) / globalStDev) - ((newZ_1 - globalMean) / globalStDev)):
+                                    
                                 if abs((newZ_1 - globalMean) / globalStDev) < abs((self.zvalue - globalMean) / globalStDev):
                                     
                                     bestBlock = block
                                     #return block
                                 
-                            else:
-                                
-                                newZ_2 = (otherSum + block.langOther) / (otherSum + block.langOther + fiSveSum + block.langFiSve)
-                                current_best = (otherSum + bestBlock.langOther) / (otherSum + bestBlock.langOther + fiSveSum + bestBlock.langFiSve)
-                                
+                        else:
+                            
+                            newZ_2 = (otherSum + block.langOther) / (otherSum + block.langOther + fiSveSum + block.langFiSve)
+                            current_best = (otherSum + bestBlock.langOther) / (otherSum + bestBlock.langOther + fiSveSum + bestBlock.langFiSve)
+                            
+                            # jos vanhan distrin uusi z-arvo on pienempi tai yhtäsuuri kuin vanha tai vanhan distrin vanhan z-arvon ja uuden distrin vanhan z-arvon itseisarvonjen erotus on suurempi kuin vastaava uusilla
+                            if (((old_newZ - globalMean) / globalStDev) <= ((old_currentZ - globalMean) / globalStDev)) or abs(((old_currentZ - globalMean) / globalStDev) - ((self.zvalue - globalMean) / globalStDev)) > abs(((old_newZ - globalMean) / globalStDev) - ((newZ_2 - globalMean) / globalStDev)):
+                            
                                 if abs((newZ_2 - globalMean) / globalStDev) < abs((current_best - globalMean) / globalStDev):
                                     
                                     bestBlock = block 
