@@ -9,12 +9,12 @@ Preparing the rttk language grid data. This is data wrangling with test data, us
 coordinate reference system: etrs-tm35fin
 
 """
-#ruudut_fp = "/home/hertta/Documents/Kandi/Kandiaineisto/13rttk060_rttk2012/rttk2012_250m.shp"
-#alueet_fp = "/home/hertta/Documents/Gradu/oppilasalueet2018/schoolAreas2018.shp"
+ruudut_fp = "/home/hertta/Documents/Kandi/Kandiaineisto/13rttk060_rttk2012/rttk2012_250m.shp"
+alueet_fp = "/home/hertta/Documents/Gradu/oppilasalueet2018/Hki_ooa_alaaste_suomi.shp"
 
 def buildRTTK(ruudut_fp, alueet_fp):
 
-    import pandas as pd
+    #import pandas as pd
     import geopandas as gpd
     import numpy as np
     
@@ -133,11 +133,11 @@ def buildRTTK(ruudut_fp, alueet_fp):
     ruudut_joined = gpd.sjoin(fn_ruudut_joined, alueet, how = 'left', op = "within")
     
     # check and plot the nan rows
-    ruudut_nan = ruudut_joined.loc[np.isnan(ruudut_joined['ID'])]
+    ruudut_nan = ruudut_joined.loc[np.isnan(ruudut_joined['id'])]
     ruudut_nan.plot()
     
     # drop the nan rows
-    ruudut_joined = ruudut_joined.loc[~np.isnan(ruudut_joined['ID'])]
+    ruudut_joined = ruudut_joined.loc[~np.isnan(ruudut_joined['id'])]
     
     # tarkastetaan plottaamalla että kaikki ok
     ruudut_joined.plot()
@@ -146,12 +146,12 @@ def buildRTTK(ruudut_fp, alueet_fp):
     ruudut_joined = ruudut_joined.set_geometry('geometry_left')
     
     # pudotetaan centroidicolumni
-    ruudut_joined = ruudut_joined.drop(['centroid', 'KUNTA_left','ALUEJAKO', 'KUNTA_right', 'NIMI_SE', 'YHTLUONTIP', 
-                                        'YHTDATANOM', 'PAIVITETTY'], axis = 1)
+    ruudut_joined = ruudut_joined.drop(['centroid', 'kunta','aluejako', 'KUNTA', 'nimi_se', 'yhtluontip', 
+                                        'yhtdatanom', 'paivitetty'], axis = 1)
     
     
     # korvataan nan -arvot -1:llä
-    ruudut_joined = ruudut_joined.fillna(-1)
+    ruudut_joined = ruudut_joined.fillna(0)
     
     # rename columns
     ruudut_joined = ruudut_joined.rename(columns = {'index_right': "index_alue", "geometry_left" : "geometry"})
@@ -163,28 +163,28 @@ def buildRTTK(ruudut_fp, alueet_fp):
     # muutetaan salatut ruudut luvuksi, joka vastaa keskimääräistä indeksiarvoa (ruutujen arvojen keskiarvo)
     
     
-    ruudut_joined["ki_muu_osuus"] = -1.0
-    
-    # lasketaan uusi sarake muunkielisten osuudesta kyseisessä ruudussa
-    for index, row in ruudut_joined.iterrows():
-        if row["ki_muu"] > -1:
-            ruudut_joined.at[index,"ki_muu_osuus"] = row["ki_muu"]/row["ki_vakiy"]
-            
-    
-    muunki_mean = ruudut_joined.loc[ruudut_joined["ki_muu_osuus"] > -1,"ki_muu_osuus"].mean()
-    
-    
-    for index, row in ruudut_joined.iterrows():
-        if row["ki_muu"] == -1:
-            ruudut_joined.at[index,"ki_muu_osuus"] = muunki_mean
-    
-    # lasketaan muunkielisten osuuden keskihajonta omaan sarakkeeseen
-    muunki_std = np.std(ruudut_joined["ki_muu_osuus"], ddof = 0)    
-    
-    # lasketaan z-arvo
-    ruudut_joined["z-value"] = (ruudut_joined["ki_muu_osuus"]-muunki_mean) / muunki_std
-    
-    # Now the z-value is 0 for blocks that have no residents or are protected
+#    ruudut_joined["ki_muu_osuus"] = -1.0
+#    
+#    # lasketaan uusi sarake muunkielisten osuudesta kyseisessä ruudussa
+#    for index, row in ruudut_joined.iterrows():
+#        if row["ki_muu"] > -1:
+#            ruudut_joined.at[index,"ki_muu_osuus"] = row["ki_muu"]/row["ki_vakiy"]
+#            
+#    
+#    muunki_mean = ruudut_joined.loc[ruudut_joined["ki_muu_osuus"] > -1,"ki_muu_osuus"].mean()
+#    
+#    
+#    for index, row in ruudut_joined.iterrows():
+#        if row["ki_muu"] == -1:
+#            ruudut_joined.at[index,"ki_muu_osuus"] = muunki_mean
+#    
+#    # lasketaan muunkielisten osuuden keskihajonta omaan sarakkeeseen
+#    muunki_std = np.std(ruudut_joined["ki_muu_osuus"], ddof = 0)    
+#    
+#    # lasketaan z-arvo
+#    ruudut_joined["z-value"] = (ruudut_joined["ki_muu_osuus"]-muunki_mean) / muunki_std
+#    
+#    # Now the z-value is 0 for blocks that have no residents or are protected
     
     
     ############ join YKR IDs to rttk 
@@ -192,7 +192,7 @@ def buildRTTK(ruudut_fp, alueet_fp):
     # read the file and set crs
     ykrgrid = gpd.read_file("/home/hertta/Documents/Gradu/ttmatrices/MetropAccess_YKR_grid/MetropAccess_YKR_grid_EurefFIN.shp")
     ykrgrid = ykrgrid.to_crs('+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs')
-    
+    ykrgrid.plot(facecolor ='gray')
     # calculate centroid for ykr_grid
     ykrgrid['centroid'] = ykrgrid.centroid
     
@@ -206,11 +206,15 @@ def buildRTTK(ruudut_fp, alueet_fp):
     ruudut_joined_ykr = gpd.GeoDataFrame(ruudut_joined_ykr, geometry = "geometry_left", crs = ykrgrid.crs)
     
 #    # plot nan rows
-#    ruudut_joined_ykr_nan = ruudut_joined_ykr.loc[np.isnan(ruudut_joined_ykr['x'])]
-#    ruudut_joined_ykr_nan.plot()
+    ruudut_joined_ykr_nan = ruudut_joined_ykr.loc[np.isnan(ruudut_joined_ykr['x'])]
+    ruudut_joined_ykr_nan.plot()
     
     # drop nan rows
     ruudut_joined_ykr = ruudut_joined_ykr.loc[~np.isnan(ruudut_joined_ykr['x'])]
+    
+ 
+    # korvataan nan -arvot -1:llä
+    #ruudut_joined_ykr = ruudut_joined_ykr.fillna(-1)
     
     # drop unnecessary columns
     ruudut_joined_ykr = ruudut_joined_ykr.drop(['index_right', 'geometry_right'], axis = 1)
@@ -219,17 +223,22 @@ def buildRTTK(ruudut_fp, alueet_fp):
     
     # change the series data type to int
     
-    ruudut_joined_ykr['ID'] = ruudut_joined_ykr['ID'].astype(int)
+    ruudut_joined_ykr['id'] = ruudut_joined_ykr['id'].astype(int)
+    
+    # drop he troubling rows
+    todrop = [5975382.0, 5918553.0, 5980292.0, 5960145.0, 5958368.0, 5958381.0]
+    
+    ruudut_joined_ykr_dr = ruudut_joined_ykr[~ruudut_joined_ykr.YKR_ID.isin(todrop)]
     
     ## asetetaan ykrID indexiksi ja splitataan ruudut alueid:n mukaan. Tehdään splitatuista taulukoista dictejä indeksi key-arvona  
     
     # set new index
-    ruudut_ykrindex = ruudut_joined_ykr.set_index(keys = 'YKR_ID', drop = False)
+    #ruudut_ykrindex = ruudut_joined_ykr.set_index(keys = 'YKR_ID', drop = False)
     
     # save the data and also return it
-    ruudut_ykrindex.to_file("/home/hertta/Documents/Gradu/oppilasalueet2018/wrangled_rttk.shp")
+    ruudut_joined_ykr_dr.to_file("/home/hertta/Documents/Gradu/oppilasalueet2018/wrangled_rttk_withoutmulti.shp")
     
-    return ruudut_ykrindex
+    return ruudut_joined_ykr
 
 #ruudut_grouped = ruudut_ykrindex.groupby(by = 'ID')
 

@@ -14,15 +14,13 @@ import random
 from classes import Block
 from classes import SchoolDistr
 
-rttk = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/wrangled_rttk.shp", encoding = "UTF-8")
-schools = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/koulut_euref_ykr.shp", encoding = "UTF-8")
+rttk = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/wrangled_rttk_withoutmulti.shp", encoding = "UTF-8")
+schools = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/koulut_euref_ykr_NEW.shp", encoding = "UTF-8")
 
 
 
 
 
-rttk_filtered = rttk.loc[rttk['ki_muu'] > -1, :]
-globalZ = sum(rttk_filtered['ki_muu'])/sum(rttk_filtered['ki_vakiy'])
 rttk.loc[rttk['ki_muu'] == -1, 'ki_muu'] = 0
 rttk.loc[rttk['ki_fi'] == -1, 'ki_fi'] = 0
 rttk.loc[rttk['ki_sv'] == -1, 'ki_sv'] = 0
@@ -36,7 +34,7 @@ for key, row in rttk.iterrows():
 
 # group rttk
 rttk = rttk.set_index(keys = 'YKR_ID', drop = False)
-rttk_grouped = rttk.groupby(by = 'ID')
+rttk_grouped = rttk.groupby(by = 'id')
 
 
 ######### build blocks, districts and separate dict of blocks
@@ -68,7 +66,7 @@ for key, row in schools.iterrows():
     ttdict = matrix_ind.to_dict(orient = 'index')
     
     # get the attribute schoolID
-    row_schoolID = row['id']
+    row_schoolID = row['ID']
     
     # fetch the right block-group, create blocks iteratively and add them to both "blocks" and global variable blocks_dict
     blocksframe = rttk_grouped.get_group(row_schoolID)
@@ -248,6 +246,52 @@ for key, block in blocks_dict.items():
     if block.containsSchool: 
         l.append(key)
 print(len(l))
+
+
+
+resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
+
+from shapely.geometry import MultiPolygon
+
+l = []
+for key, item in districts.items():
+    print(type(item.geometry))
+    if type(item.geometry) == MultiPolygon: 
+        l.append(key)
+
+
+multipolys = origframe[origframe.key.isin(l)]
+
+ax = origframe.plot(linewidth=0.5, color =  'green');
+
+multipolys.plot(ax=ax, color='red', alpha=0.5);
+
+multipolys.plot()
+
+# poimitaan poistettavat ruutugeometriat
+
+delblocks = []
+
+for key, value in multipolys.iterrows():
+    
+    l1 = list(value['geometry'])
+    
+    for p in l1:
+        
+        x, y = p.exterior.coords.xy
+        if len(x) == 5:
+            delblocks.append(p)
+
+rows_to_del = []
+for index, row in rttk.iterrows():
+    for p in delblocks:
+        if row['geometry'] == p:
+            rows_to_del.append(index)
+
+rttk2 = rttk.drop(labels = rows_to_del)
+
+
+rttk.to_file("/home/hertta/Documents/Gradu/oppilasalueet2018/rttk_non_multipoly.shp") 
 
 #Idealista
 #

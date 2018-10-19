@@ -14,6 +14,11 @@ import pandas as pd
 koulut_geocoded = gpd.read_file("/home/hertsy/Documents/Gradu/oppilasalueet2018/koulut_osoitteet_nom2.shp", encoding = "UTF-8")
 koulut_euref = koulut_geocoded.to_crs('+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs')
 
+#duplikoidaan hiidenkivi 
+hiidenk = koulut_euref.loc[koulut_euref["ID"] == '114329',:]
+hiidenk["ID"] = '114404'
+koulut_euref = koulut_euref.append(hiidenk)
+#koulut_euref = koulut_euref.reindex(labels = range(78))
 koulut_euref.plot()
 
 ykrgrid = gpd.read_file("/home/hertsy/Documents/Gradu/ttmatrices/MetropAccess_YKR_grid/MetropAccess_YKR_grid_EurefFIN.shp")
@@ -31,16 +36,16 @@ koulut_euref_ykr = gpd.sjoin(koulut_euref, ykrgrid, how = 'left', op = "within")
 
 ## muutetaan id-sarakkeen datatyyppi integeriksi
 
-koulut_euref_ykr['id'] = koulut_euref_ykr['id'].astype(int)
+koulut_euref_ykr['ID'] = koulut_euref_ykr['ID'].astype(int)
 
 ## asetetaan id indexiksi   
 
-koulut_euref_ykr = koulut_euref_ykr.set_index(keys = 'id', drop = False)
+koulut_euref_ykr = koulut_euref_ykr.set_index(keys = 'ID', drop = False)
 
 
 ## Save as file
 
-koulut_euref_ykr.to_file("/home/hertta/Documents/Gradu/oppilasalueet2018/koulut_euref_ykr.shp") 
+koulut_euref_ykr.to_file("/home/hertta/Documents/Gradu/oppilasalueet2018/koulut_euref_ykr_NEW.shp") 
 
 #luetaan testiksi yksi matriisi
 #testim = pd.read_csv("/home/hertsy/Documents/Gradu/ttmatrices/HelsinkiTravelTimeMatrix2018/5900xxx/travel_times_to_ 5900227.txt", sep = ";")
@@ -49,19 +54,19 @@ koulut_euref_ykr.to_file("/home/hertta/Documents/Gradu/oppilasalueet2018/koulut_
 
 
 # luetaan yksi kerrallaan tt matrixit data framen sarakkeeseen dicteinä
-koulut_euref_ykr["ttmatrix"] = None
-
-for index, row in koulut_euref_ykr.iterrows():
-    ykrid = row['YKR_ID']
-    fourFirst = str(ykrid)[0:4]
-    
-    fp = "/home/hertta/Documents/Gradu/ttmatrices/HelsinkiTravelTimeMatrix2018/" + fourFirst + "xxx/" +"travel_times_to_ " + str(ykrid) + ".txt"
-    matrix = pd.read_csv(fp, sep = ";")
-    matrix_ind = matrix.set_index("from_id")
-    
-    # tässä pitää käsitellä -1 arvot ja poistaa turhat sarakkeet myöhemmissä versioissa
-    # lisäksi pitää miettiä, mikä dictirakenne on kätevin: https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.to_dict.html
-    
-    ttdict = matrix_ind.to_dict(orient = 'index')
-    koulut_euref_ykr.loc[index,"ttmatrix"] = [ttdict]
-
+#koulut_euref_ykr["ttmatrix"] = None
+#
+#for index, row in koulut_euref_ykr.iterrows():
+#    ykrid = row['YKR_ID']
+#    fourFirst = str(ykrid)[0:4]
+#    
+#    fp = "/home/hertta/Documents/Gradu/ttmatrices/HelsinkiTravelTimeMatrix2018/" + fourFirst + "xxx/" +"travel_times_to_ " + str(ykrid) + ".txt"
+#    matrix = pd.read_csv(fp, sep = ";")
+#    matrix_ind = matrix.set_index("from_id")
+#    
+#    # tässä pitää käsitellä -1 arvot ja poistaa turhat sarakkeet myöhemmissä versioissa
+#    # lisäksi pitää miettiä, mikä dictirakenne on kätevin: https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.to_dict.html
+#    
+#    ttdict = matrix_ind.to_dict(orient = 'index')
+#    koulut_euref_ykr.loc[index,"ttmatrix"] = [ttdict]
+#
