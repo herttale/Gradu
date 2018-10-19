@@ -74,7 +74,9 @@ for key, row in schools.iterrows():
     blocksframe = rttk_grouped.get_group(row_schoolID)
     blocks = {}
     for key, row in blocksframe.iterrows():
-        block = Block(geometry = row['geometry'], ykrId = row['YKR_ID'], studentBase = row['pupils'], langFiSve = row['ki_fi'] + row['ki_sv'], langOther = row['ki_muu'], schoolID = row_schoolID)
+        block = Block(geometry = row['geometry'], ykrId = row['YKR_ID'], studentBase = row['pupils'], langFiSve = row['ki_fi'] + row['ki_sv'], langOther = row['ki_muu'], schoolID = row_schoolID, containsSchool = False)
+        if block.ykrId == ykrid: 
+            block.containsSchool = True
         blocks[row['YKR_ID']] = block
         blocks_dict[row['YKR_ID']] = block
     
@@ -240,6 +242,12 @@ for key, item in districts.items():
     origframe = origframe.append({'key': key, 'geometry' : item.geometry}, ignore_index=True)
     
 origframe.plot(column = 'key', linewidth=1.5)
+
+l = []
+for key, block in blocks_dict.items(): 
+    if block.containsSchool: 
+        l.append(key)
+print(len(l))
 
 #Idealista
 #

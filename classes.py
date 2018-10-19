@@ -401,58 +401,61 @@ class SchoolDistr:
         
         for block in blockset:
             
-           # testataan hylkäysperiate 1
-            if (block.studentBase + self.students) <= self.studentlimit:
-                
-                # testataan hylkäysperiaate 2
-                if self.is_too_far(block) == False:
+            # testataan hylkäysperiaate 0
+            if block.containsSchool == False:
+            
+               # testataan hylkäysperiate 1
+                if (block.studentBase + self.students) <= self.studentlimit:
                     
-                    # haetaan muuttujaan blockin districti
-                    oldDistr = districts[block.schoolID]
-                
+                    # testataan hylkäysperiaate 2
+                    if self.is_too_far(block) == False:
+                        
+                        # haetaan muuttujaan blockin districti
+                        oldDistr = districts[block.schoolID]
                     
-                    # testataan tietotyypin muuttumista, hylkäysperiaate 3
-                    if oldDistr.break_contiguity(block) == False:
                         
-                        old_fiSveSum = 0
-                        old_otherSum= 0
-                        
-                        for key, value in oldDistr.blocks.items():
+                        # testataan tietotyypin muuttumista, hylkäysperiaate 3
+                        if oldDistr.break_contiguity(block) == False:
                             
-                            old_fiSveSum += value.langFiSve
-                            old_otherSum += value.langOther
+                            old_fiSveSum = 0
+                            old_otherSum= 0
                             
-                        old_newZ = (old_otherSum - block.langOther) / (old_otherSum - block.langOther + old_fiSveSum - block.langFiSve)
-                        old_currentZ = (old_otherSum) / (old_otherSum + old_fiSveSum)
-                        
-
-                        # testataan onko uusi parempi kuin tämänhetkinen self -z-arvo
-                        
-                        # kun bestBlock on tyhjä, verrataan alueen self.zvalueen
-                        if bestBlock == None:       
-                        
-                            newZ_1 = (otherSum + block.langOther) / (otherSum + block.langOther + fiSveSum + block.langFiSve)
+                            for key, value in oldDistr.blocks.items():
                                 
-                            # jos vanhan distrin uusi z-arvo on pienempi tai yhtäsuuri kuin vanha tai vanhan distrin vanhan z-arvon ja uuden distrin vanhan z-arvon itseisarvonjen erotus on suurempi kuin vastaava uusilla
-                            if (((old_newZ - globalMean) / globalStDev) <= ((old_currentZ - globalMean) / globalStDev)) or abs(((old_currentZ - globalMean) / globalStDev) - ((self.zvalue - globalMean) / globalStDev)) > abs(((old_newZ - globalMean) / globalStDev) - ((newZ_1 - globalMean) / globalStDev)):
-                                    
-                                if abs((newZ_1 - globalMean) / globalStDev) < abs((self.zvalue - globalMean) / globalStDev):
-                                    
-                                    bestBlock = block
-                                    #return block
+                                old_fiSveSum += value.langFiSve
+                                old_otherSum += value.langOther
                                 
-                        else:
+                            old_newZ = (old_otherSum - block.langOther) / (old_otherSum - block.langOther + old_fiSveSum - block.langFiSve)
+                            old_currentZ = (old_otherSum) / (old_otherSum + old_fiSveSum)
                             
-                            newZ_2 = (otherSum + block.langOther) / (otherSum + block.langOther + fiSveSum + block.langFiSve)
-                            current_best = (otherSum + bestBlock.langOther) / (otherSum + bestBlock.langOther + fiSveSum + bestBlock.langFiSve)
+    
+                            # testataan onko uusi parempi kuin tämänhetkinen self -z-arvo
                             
-                            # jos vanhan distrin uusi z-arvo on pienempi tai yhtäsuuri kuin vanha tai vanhan distrin vanhan z-arvon ja uuden distrin vanhan z-arvon itseisarvonjen erotus on suurempi kuin vastaava uusilla
-                            if (((old_newZ - globalMean) / globalStDev) <= ((old_currentZ - globalMean) / globalStDev)) or abs(((old_currentZ - globalMean) / globalStDev) - ((self.zvalue - globalMean) / globalStDev)) > abs(((old_newZ - globalMean) / globalStDev) - ((newZ_2 - globalMean) / globalStDev)):
+                            # kun bestBlock on tyhjä, verrataan alueen self.zvalueen
+                            if bestBlock == None:       
                             
-                                if abs((newZ_2 - globalMean) / globalStDev) < abs((current_best - globalMean) / globalStDev):
+                                newZ_1 = (otherSum + block.langOther) / (otherSum + block.langOther + fiSveSum + block.langFiSve)
                                     
-                                    bestBlock = block 
+                                # jos vanhan distrin uusi z-arvo on pienempi tai yhtäsuuri kuin vanha tai vanhan distrin vanhan z-arvon ja uuden distrin vanhan z-arvon itseisarvonjen erotus on suurempi kuin vastaava uusilla
+                                if (((old_newZ - globalMean) / globalStDev) <= ((old_currentZ - globalMean) / globalStDev)) or abs(((old_currentZ - globalMean) / globalStDev) - ((self.zvalue - globalMean) / globalStDev)) > abs(((old_newZ - globalMean) / globalStDev) - ((newZ_1 - globalMean) / globalStDev)):
+                                        
+                                    if abs((newZ_1 - globalMean) / globalStDev) < abs((self.zvalue - globalMean) / globalStDev):
+                                        
+                                        bestBlock = block
+                                        #return block
+                                    
+                            else:
                                 
+                                newZ_2 = (otherSum + block.langOther) / (otherSum + block.langOther + fiSveSum + block.langFiSve)
+                                current_best = (otherSum + bestBlock.langOther) / (otherSum + bestBlock.langOther + fiSveSum + bestBlock.langFiSve)
+                                
+                                # jos vanhan distrin uusi z-arvo on pienempi tai yhtäsuuri kuin vanha tai vanhan distrin vanhan z-arvon ja uuden distrin vanhan z-arvon itseisarvonjen erotus on suurempi kuin vastaava uusilla
+                                if (((old_newZ - globalMean) / globalStDev) <= ((old_currentZ - globalMean) / globalStDev)) or abs(((old_currentZ - globalMean) / globalStDev) - ((self.zvalue - globalMean) / globalStDev)) > abs(((old_newZ - globalMean) / globalStDev) - ((newZ_2 - globalMean) / globalStDev)):
+                                
+                                    if abs((newZ_2 - globalMean) / globalStDev) < abs((current_best - globalMean) / globalStDev):
+                                        
+                                        bestBlock = block 
+                                    
         return bestBlock
     
                                 
@@ -464,20 +467,23 @@ class SchoolDistr:
         
         for block in blockset:
             
-            # testataan hylkäysperiate 1
-            if (block.studentBase + self.students) <= self.studentlimit:
-                
-                # testataan hylkäysperiaate 2
-                if self.is_too_far(block) == False:
+            # testataan hylkäysperiaate 0
+            if block.containsSchool == False:
+            
+                # testataan hylkäysperiate 1
+                if (block.studentBase + self.students) <= self.studentlimit:
                     
-                    # haetaan muuttujaan blockin districti
-                    oldDistr = districts[block.schoolID]
-                    
-                    # testataan tietotyypin muuttumista, hylkäysperiaate 3
-                    if oldDistr.break_contiguity(block) == False:
+                    # testataan hylkäysperiaate 2
+                    if self.is_too_far(block) == False:
                         
-                        # lisätään blocklistiin
-                        blocklist.append(block)
+                        # haetaan muuttujaan blockin districti
+                        oldDistr = districts[block.schoolID]
+                        
+                        # testataan tietotyypin muuttumista, hylkäysperiaate 3
+                        if oldDistr.break_contiguity(block) == False:
+                            
+                            # lisätään blocklistiin
+                            blocklist.append(block)
         
         if len(blocklist) > 0:
             # generoidaan random numero sopivalta väliltä                
@@ -493,7 +499,7 @@ class SchoolDistr:
 
 class Block:
     
-    def __init__(self, geometry, ykrId, langFiSve, langOther, studentBase, schoolID):
+    def __init__(self, geometry, ykrId, langFiSve, langOther, studentBase, schoolID, containsSchool):
 
         # tietää oman geometriansa
         self.geometry = geometry
@@ -513,7 +519,8 @@ class Block:
         # tietää oman tämän hetkisen kouluID:nsä
         self.schoolID = schoolID
     
-
+        # tietää oman tämän hetkisen kouluID:nsä
+        self.containsSchool = containsSchool
         
 ### DONE:
         
@@ -522,22 +529,20 @@ class Block:
 # contiguity check ei toimi jostain syystä! Korjaa!!! -> touches_which ja add tekee yhdessä multipolygoneja?! Touchesiin riittää vain kulmien koskettaminen, ja sen jälkeen kun lasketaan uusi geometria on tuloksena multipolygon..
 ### https://stackoverflow.com/questions/1960961/polygon-touches-in-more-than-one-point-with-shapely
 # corrcted the z-value to be mean-based
+# the optimization must be some kind of compromize between local & global optimum
+# the optimization cannot base on block's z-values, but the block should have the absolute population variables as parameters. the z-values should be calculated as district-based value, basing on real population values
+# corrcted the z-value to be mean-based. The problem now is, that the blocks with 0 -zvalue are attractive. Should change the 0 blocks to none, and only add them as "secondary"?
+### there could be a 20% chance that a district will select a secondary block?
+### in this case, None values should be handled in calculate z-value
+# inside selectbest/select_random, check that the blocks actually containing the school building itself can not chance the district: block must have a new attribute self.containsSchool
+
         
 ### TODO:
 
-# inside selectbest/select_random, check that the blocks actually containing the school building itself can not chance the district: block must have a new attribute self.containsSchool
+# miksi vain 75:sää ruudussa on koulu, vaikka kouluja on 77? 
 # divide the one multipolygon in the data to two separate entities, also fix the data so that there won't be other multipolys
+# make some kind of a check for polygon diameter / area, to make shapes less weird 
 # make a gif of the process: plot either every 10th or 20th iteration 
 # share the execution to multiple prosessors
-        
-        
-        
-# corrcted the z-value to be mean-based. The problem now is, that the blocks with 0 -zvalue are attractive. Should change the 0 blocks to none, and only add them as "secondary"?
-## there could be a 20% chance that a district will select a secondary block?
-## in this case, None values should be handled in calculate z-value
-        
-# make some kind of a check for polygon diameter / area, to make shapes less weird 
-        
-# the optimization must be some kind of compromize between local & global optimum
 
-# the optimization cannot base on block's z-values, but the block should have the absolute population variables as parameters. the z-values should be calculated as district-based value, basing on real population values
+        
