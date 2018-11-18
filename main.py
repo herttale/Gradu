@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -13,6 +14,9 @@ import statistics as st
 import random
 from classes import Block
 from classes import SchoolDistr
+import matplotlib.pyplot as plt 
+import imageio
+import glob   
 
 rttk = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/wrangled_rttk_withoutmulti.shp", encoding = "UTF-8")
 schools = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/koulut_euref_ykr_NEW.shp", encoding = "UTF-8")
@@ -81,6 +85,8 @@ for key, row in schools.iterrows():
     # now create district and add it to dict "districts"
     distr = SchoolDistr(row_schoolID, blocks, ttdict)
     distr.calculate_geometry()
+    distr.calculate_area_diameter()
+    distr.calculate_min_area_diameter()
     distr.calculate_maxttime()
     distr.calculate_studentbase()
     distr.calculate_zvalue()
@@ -108,6 +114,7 @@ Zfactor = []
 # luodaan kierroksia laskeva muuttuja. Sitä käytetään mm. määrittämään, milloin Zfactorin kehitystä aletaan tarkkailla ja suoritus voidaan pysäyttää.
 mainiteration = 0
 subiteration = 0
+divider = 5
 
 # alustetaan todennäköisyyshomman kattoarvo
 ceil = 50
@@ -124,16 +131,36 @@ globalMean = sum(stdev_list)/len(districts)
 
 # keskihajonta
 globalStDev = np.std(stdev_list, ddof = 0)
+
+
+#plottaa & tallenna alkutila
+fp = "/home/hertta/Documents/Gradu/kuvia/gif2/iter_" + str(subiteration) + ".png" 
+
+resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
+for key, item in districts.items():
+    resultframe = resultframe.append({'key': key, 'geometry' : item.geometry, 'zvalue' : (item.zvalue-globalMean)/ globalStDev}, ignore_index=True)
+
+
+f, ax = plt.subplots(1)
+ax = resultframe.plot(ax=ax, column = 'zvalue',cmap = 'plasma', edgecolor='black', lw=0.7, vmin = -1.64188227253489, vmax = 3.74364273153602, legend = True)
+ax.set_axis_off()
+plt.savefig(fp, dpi=200)
+plt.close()
  
 # Iteroidan sdDictiä kunnes iteration on vähintään raja-arvo ja Zfactor ei enää muutu juurikaan pienemmäksi, jolloin palautetaan viimeinen tilanne ja break
 while True:
     
     
     # calculate and append Zfactor, with sums of district's z-values' absolute values 
+#    Zlist = []
     Z = 0
     
     for key, value in districts.items():
         Z += abs((value.zvalue-globalMean)/ globalStDev)
+#    for key, item in districts.items():
+#        Zlist.append(item.zvalue)
+#        
+#    Z = np.std(stdev_list, ddof = 0)
     
     Zfactor.append(Z)
     
@@ -155,10 +182,38 @@ while True:
     print("mainiteration round:", mainiteration, ', current zvalue:', Z)
     
     
+    
     #Iteroidaan kaikki districtit
     for key in list(districts.keys()):
         
+        
         subiteration += 1
+        
+        if subiteration % divider == 0:
+            
+            if subiteration < 10:
+                itertext = '000'+ str(subiteration)
+            elif subiteration < 100:
+                itertext = '00'+ str(subiteration)
+            elif subiteration < 1000:
+                itertext = '0'+ str(subiteration)
+            else: 
+                itertext = str(subiteration)
+                
+            #plottaa & tallenna
+            fp = "/home/hertta/Documents/Gradu/kuvia/gif2/iter_" + itertext + ".png" 
+            
+            resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
+            for key, item in districts.items():
+                resultframe = resultframe.append({'key': key, 'geometry' : item.geometry, 'zvalue' : (item.zvalue-globalMean)/ globalStDev}, ignore_index=True)
+            
+            
+            f, ax = plt.subplots(1)
+            ax = resultframe.plot(ax=ax, column = 'zvalue',cmap = 'plasma', edgecolor='black', lw=0.7, vmin = -1.64188227253489, vmax = 3.74364273153602, legend = True)
+            ax.set_axis_off()
+            plt.savefig(fp, dpi=200)
+            plt.close()
+            
         
         # arvo todennäköisyysluku, jos ceil on suurempi kuin 50, muuten randomint = 0 ja valitaan aina paras
         if ceil >= 50:
@@ -209,20 +264,47 @@ while True:
     
     # joka iteraatiokierroksen lopussa ceiliä vähennetään 
     ceil -= 10
+    divider += 5
 
 
 
 
-for key, v in districts.items(): print(key, v.zvalue)
+stdev_list2 = []
 
-import matplotlib.pyplot as plt    
+for key, item in districts.items():
+    stdev_list.append(item.zvalue)
 
+# keskiarvo
+globalMean2 = sum(stdev_list)/len(districts)
+
+# keskihajonta
+globalStDev2 = np.std(stdev_list, ddof = 0)
+
+
+
+#for key, v in districts.items(): print(key, v.zvalue)
+
+
+zlist = []
 plt.plot(Zfactor)
+plt.savefig("/home/hertta/Documents/Gradu/kuvia/zkayra.png", dpi=300)
     
 resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
 for key, item in districts.items():
     resultframe = resultframe.append({'key': key, 'geometry' : item.geometry, 'zvalue' : (item.zvalue-globalMean)/ globalStDev}, ignore_index=True)
-    print(key, (item.zvalue-globalMean)/ globalStDev)
+    #print(key, (item.zvalue-globalMean)/ globalStDev)
+    zlist.append(item.zvalue)
+
+  
+
+f, ax = plt.subplots(1)
+ax = resultframe.plot(ax=ax, column = 'zvalue',cmap = 'plasma', edgecolor='black', lw=0.7, vmin = -1.64188227253489, vmax = 3.74364273153602, legend = True)
+ax.set_axis_off()
+#plt.show()
+plt.savefig("/home/hertta/Documents/Gradu/kuvia/gif2/iter_final.png", dpi = 200)
+
+
+
 
     
 resultframe.plot(column = 'key', linewidth=1.5)
@@ -235,63 +317,30 @@ resultframe.crs = '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs'
 resultframe.to_file("/home/hertta/Documents/Gradu/tuloksia/optimated_districts_rand1.shp") 
 
 
-origframe = gpd.GeoDataFrame(columns= ['key', 'geometry'], geometry = "geometry")
-for key, item in districts.items():
-    origframe = origframe.append({'key': key, 'geometry' : item.geometry}, ignore_index=True)
-    
-origframe.plot(column = 'key', linewidth=1.5)
-
-l = []
-for key, block in blocks_dict.items(): 
-    if block.containsSchool: 
-        l.append(key)
-print(len(l))
 
 
 
-resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
+####### Making the gif animation
+### The code in the hints for week 7 didn't work for some reason for me (raised error: "OSError: Cannot understand given URI: "), so I made my own solution.
 
-from shapely.geometry import MultiPolygon
+# Find all files from given folder that has .png file-format
+search_criteria = "/home/hertta/Documents/Gradu/kuvia/gif2/*.png"
 
-l = []
-for key, item in districts.items():
-    print(type(item.geometry))
-    if type(item.geometry) == MultiPolygon: 
-        l.append(key)
+# Execute the glob function that returns a list of filepaths
+figure_paths = sorted(glob.glob(search_criteria))
 
+# set the output file path 
+output_gif_path = "/home/hertta/Documents/Gradu/kuvia/gif2/Algorithm_animation.gif"
 
-multipolys = origframe[origframe.key.isin(l)]
+# read images one by one into a list
+images = []
+for n in range (1,len(figure_paths)):
+    img = imageio.imread(figure_paths[n]) 
+    images.append(img)
 
-ax = origframe.plot(linewidth=0.5, color =  'green');
+# Save the animation to disk with 48 ms durations  
+imageio.mimsave(output_gif_path, images,duration=0.42, subrectangles=True)
 
-multipolys.plot(ax=ax, color='red', alpha=0.5);
-
-multipolys.plot()
-
-# poimitaan poistettavat ruutugeometriat
-
-delblocks = []
-
-for key, value in multipolys.iterrows():
-    
-    l1 = list(value['geometry'])
-    
-    for p in l1:
-        
-        x, y = p.exterior.coords.xy
-        if len(x) == 5:
-            delblocks.append(p)
-
-rows_to_del = []
-for index, row in rttk.iterrows():
-    for p in delblocks:
-        if row['geometry'] == p:
-            rows_to_del.append(index)
-
-rttk2 = rttk.drop(labels = rows_to_del)
-
-
-rttk.to_file("/home/hertta/Documents/Gradu/oppilasalueet2018/rttk_non_multipoly.shp") 
 
 #Idealista
 #

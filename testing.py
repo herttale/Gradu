@@ -270,9 +270,81 @@ testunion = cascaded_union([poly1, poly2])
 
 
 
+origframe = gpd.GeoDataFrame(columns= ['key', 'geometry'], geometry = "geometry")
+for key, item in districts.items():
+    origframe = origframe.append({'key': key, 'geometry' : item.geometry}, ignore_index=True)
+    
+origframe.plot(column = 'key', linewidth=1.5)
+
+l = []
+for key, block in blocks_dict.items(): 
+    if block.containsSchool: 
+        l.append(key)
+print(len(l))
 
 
 
+resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
 
+from shapely.geometry import MultiPolygon
+
+l = []
+for key, item in districts.items():
+    print(type(item.geometry))
+    if type(item.geometry) == MultiPolygon: 
+        l.append(key)
+
+
+multipolys = origframe[origframe.key.isin(l)]
+
+ax = origframe.plot(linewidth=0.5, color =  'green');
+
+multipolys.plot(ax=ax, color='red', alpha=0.5);
+
+multipolys.plot()
+
+# poimitaan poistettavat ruutugeometriat
+
+delblocks = []
+
+for key, value in multipolys.iterrows():
+    
+    l1 = list(value['geometry'])
+    
+    for p in l1:
+        
+        x, y = p.exterior.coords.xy
+        if len(x) == 5:
+            delblocks.append(p)
+
+rows_to_del = []
+for index, row in rttk.iterrows():
+    for p in delblocks:
+        if row['geometry'] == p:
+            rows_to_del.append(index)
+
+rttk2 = rttk.drop(labels = rows_to_del)
+
+
+rttk.to_file("/home/hertta/Documents/Gradu/oppilasalueet2018/rttk_non_multipoly.shp") 
+
+
+zlist = []
+resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
+for key, item in districts.items():
+    resultframe = resultframe.append({'key': key, 'geometry' : item.geometry, 'zvalue' : item.zvalue}, ignore_index=True)
+    #print(key, (item.zvalue-globalMean)/ globalStDev)
+    zlist.append(item.zvalue)
+
+stdev_list = []
+
+for key, item in districts.items():
+    stdev_list.append(item.zvalue)
+
+# keskiarvo
+globalMean = sum(stdev_list)/len(districts)
+
+# keskihajonta
+globalStDev = np.std(stdev_list, ddof = 0)
 
 
