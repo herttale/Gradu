@@ -33,8 +33,20 @@ class SchoolDistr:
         # tietää oman polygoninsa, joka lasketaan metodin avulla 
         self.geometry = None
         
-        # tietää oman maksimimatka-aikansa (nyk. maksimikävelyaika * 1.5 ??)
+        # tietää oman alkuperäisen maksimimatka-aikansa
         self.maxttime = None
+        
+#        # tietää oman keskimääräisen matka-aikansa
+#        self.meanttime = None
+        
+        # Tietää oman suomen-/ruotsinkilisten määränsä
+        self.fiSveSum = None
+        
+        # Tietää oman vieraskielisten määränsä
+        self.otherSum = None
+        
+        # tietää oman sosiaalisen scorensa
+        self.socialScore = None
         
         # tietää oman tämänhetkisen oppilasmääränsä
         self.students = None
@@ -45,11 +57,9 @@ class SchoolDistr:
         # tietää oman tämän hetken z-arvonsa
         self.zvalue = None
         
-        # tietää oman tämän hetken area-diameter -suhteensa
-        self.areaDiam = None
+
         
-#        # tietää oman maksimi area-diameter -suhteensa
-#        self.areaDiamMin = None
+
 
 
 # Metodit
@@ -62,41 +72,28 @@ class SchoolDistr:
             geomList.append(item.geometry)
        
         # yhdistää ruudut yhdeksi polygoniksi ja tallentaa ne muuttujaan self.geometry
-        self.geometry = cascaded_union(geomList)
+        return cascaded_union(geomList)
         #return cascaded_union(geomList)
         
         
-#   # laske diameter-area -suhde
-#    def calculate_area_diameter(self):
-#        
-#        if self.geometry == None:
-#            self.calculate_geometry()
-#            
-#        area = self.geometry.area
-#        diameter = self.geometry.boundary.length
-#        self.areaDiam = diameter/area
         
-   # laske diameter-area -suhde
-    def calculate_diameter_area(self):
+   # laske circumference-area -suhde
+    def calculate_circumference_area(self):
         
         if self.geometry == None:
             self.calculate_geometry()
             
         area = self.geometry.area
-        diameter = self.geometry.boundary.length
-        self.diamArea = diameter/area
+        circumference = self.geometry.boundary.length
+        return circumference/area
    
-    # laske area-diameter -suhteen maksimi
-    def calculate_min_diameter_area(self):
-        
-        self.areaDiamMin = (self.areaDiam) * 3
         
         
-    # laske maksimimatka-aika
+    # laske tämänhetkinen maksimimatka-aika
     def calculate_maxttime(self):
         
-        # laskee oman matka-aika-maksimiarvonsa, joka toimii myöhemmin hylkäysperiaatteena. 
-        # esim. nyk. maksimikävelyaika * 1.5 ??
+        # laskee oman matka-aika-maksimiarvonsa
+        # esim. nyk. maksimikävelymatka
         # lasketaan vain kerran, kun instanssi luodaan
         maxt = 0
         for key, value in self.blocks.items(): 
@@ -104,11 +101,42 @@ class SchoolDistr:
             if ttime > maxt:
                 maxt = ttime
         
-        self.maxttime = maxt * 1.25 # 1.5? 2?
+        return maxt 
+    
         
+#    def calculate_meanttime(self):
+#        
+#        # calculates the arithmetic average of travel times/distances from blocks to school
+#        tsum = 0
+#        
+#        for key, value in self.blocks.items(): 
+#            tsum += self.ttmatrix[key]['walk_d']
+#            
+#        return tsum/len(self.blocks)
+    
+    # Calculates the amount of finnish & swedish speaking population
+    def calculate_fiSveSum(self):
         
-    # laske z-arvo, pure population percentage -based
-    def calculate_zvalue(self):
+        fiSveSum = 0
+        for key, value in self.blocks.items():
+            
+            fiSveSum += value.langFiSve
+        
+        return fiSveSum
+    
+    # Calculates the amount of population speaking other languages
+    def calculate_otherSum(self):
+        
+        otherSum = 0
+        for key, value in self.blocks.items():
+            
+            otherSum += value.langOther 
+        
+        return otherSum
+      
+        
+    # calculate social score, as now purely percentage -based (tämä funktio mahd turha)
+    def calculate_socialScore(self):
         
         fiSveSum = 0
         otherSum = 0
@@ -117,7 +145,37 @@ class SchoolDistr:
             fiSveSum += value.langFiSve
             otherSum += value.langOther 
                     
-        self.zvalue = otherSum/(otherSum + fiSveSum)      
+        return otherSum/(otherSum + fiSveSum)    
+        
+        
+    def calculate_zvalue(self, globalMean, globalStDev):
+        
+        # muutetaan kaikki arvot prosenteiksi tai skaalataan muuhun samaan skaalaan
+        # muutetaan potenssifunktioksi, 
+        
+        # socialscore on jo 0-1, vähennetään siitä globaali keskiarvo jotta saadaan poikkeama
+        social = abs(self.socialScore - globalMean)**2
+        
+        # matka-aika: optimoidaan pienemmäksi. 
+        # keskimääräinen koulumatkan pituus osuutena maksimimatka-ajasta pitäisi olla mahd. suuri! 
+        # miten käännetään pieneneväksi?
+        # travel = (self.meanttime/self.maxttime)**2
+        # laskee alueen maksimimatka-ajan osuutta alkuperaäisestä maksimiajasta, pyritään pienentämään
+        travel = (self.calculate_maxttime()/self.maxttime)**2
+        
+        
+        # oppilasmäärä: optimoidaan poikkeaman itseisarvoa pienemmäksi 
+        student = (abs(self.students - self.studentlimit)/self.studentlimit)**2
+        
+        # alueen muoto
+        shape = (self.calculate_circumference_area())**2
+        
+        # mietitään mahdolliset painot, aluksi voidaan koittaa painottamatonta
+        
+        # lasketaan painotettu keskiarvo, jotta saadaan lopullinen z-arvo 
+        zvalue = (social * 4 + student + travel + shape)/7
+        
+        return zvalue 
 
     
     # laskee oppilaiden (6-8 v ?) hetkellisen määrän alueella
@@ -128,12 +186,12 @@ class SchoolDistr:
         for key, value in self.blocks.items(): 
             studentSum += value.studentBase
 
-        self.students = studentSum
+        return studentSum
         
-  
-    def calculate_studentlimit(self):
-        
-        self.studentlimit = self.students * 2 # 1.5? 2?
+#    # laske alkuperäinen
+#    def calculate_studentlimit(self):
+#        
+#        self.studentlimit = self.students # 1.5? 2?
     
               
     # mitä ruutuja instanssi sivuaa (koskee). Palauttaa LISTAN
@@ -174,9 +232,9 @@ class SchoolDistr:
             block.schoolID = self.schoolID
             
             self.blocks[block.ykrId] = block
-            self.calculate_zvalue() 
-            self.calculate_geometry()
-            self.calculate_studentbase()
+            self.zvalue = self.calculate_zvalue() 
+            self.geometry = self.calculate_geometry()
+            self.students = self.calculate_studentbase()
             
         
     # poista ruutu blocks -dictistä 
@@ -189,9 +247,9 @@ class SchoolDistr:
             return
         else:
             del self.blocks[block.ykrId]
-            self.calculate_zvalue()
-            self.calculate_geometry()
-            self.calculate_studentbase()
+            self.zvalue = self.calculate_zvalue()
+            self.geometry = self.calculate_geometry()
+            self.students = self.calculate_studentbase()
     
     # Tämä tehdään aina sille distrille, jolta ruutua oltaisiin ottamassa. Testataan, että distrin 
     # geometrian tietotyyppi pysyy samana, mikäli yksi ruutu poistetaan (ettei polygonista tule multipolygon - lisättäessä tietotyyppi voi kuitenkin muuttua toiseen suuntaan)       
@@ -215,101 +273,82 @@ class SchoolDistr:
             
         geom2 = cascaded_union(geomList)
         
-        area2 = geom2.area
-        diameter2 = geom2.boundary.length
-        areaDiam2 = diameter2/area2
         
         # palauttaa True jos tietotyyppi muuttuu poiston seurauksena
-        typecheck = type(geom1) != type(geom2) 
-        areacheck = (areaDiam2 <= self.areaDiamMin)
-       
-        if typecheck == False and areacheck == True:
-            return False
-        else:
-            return True
-    
-    #test whether adding block would violate area/diameter rule
-    def break_areaDiam(self, block):
-            
-        geom = cascaded_union([self.geometry, block.geometry])
-        area = geom.area
-        diameter = geom.boundary.length
-        areaDiam2 = diameter/area
-        return areaDiam2 <= self.areaDiamMin
+        return type(geom1) != type(geom2) 
 
+    # Method for initializing  
+    def initiate_distr_attrs(self):
+        
+        self.geometry = self.calculate_geometry()
+        self.meanttime = self.calculate_meanttime()
+        self.maxttime = self.calculate_maxttime()
+        self.studentlimit, self.students = self.calculate_studentbase()
+        self.fiSveSum = self.calculate_fiSveSum()
+        self.otherSum = self.calculate_otherSum()
+        self.socialScore = self.calculate_socialScore()
+        self.zvalue = self.calculate_zvalue()
 
+    # Method for initializing  
+    def update_distr(self):
+        
+        self.geometry = self.calculate_geometry()
+        self.meanttime = self.calculate_meanttime()        
+        self.students = self.calculate_studentbase()
+        self.fiSveSum = self.calculate_fiSveSum()
+        self.otherSum = self.calculate_otherSum()        
+        self.socialScore = self.calculate_socialScore()
+        self.zvalue = self.calculate_zvalue()
+        
+        
     # LOCAL version with global check 
-    def select_best_block(self, blockset, districts, globalMean, globalStDev):
-        
-        
-        fiSveSum = 0
-        otherSum= 0
-        
-        for key, value in self.blocks.items():
-            
-            fiSveSum += value.langFiSve
-            otherSum += value.langOther
-        
+    def select_best_block(self, blockset, districts, globalMean, globalStDev):    
+               
         bestBlock = None
         
         for block in blockset:
             
             # testataan hylkäysperiaate 0
             if block.containsSchool == False:
-            
-               # testataan hylkäysperiate 1
-                if (block.studentBase + self.students) <= self.studentlimit:
+                          
+                # haetaan muuttujaan blockin districti
+                oldDistr = districts[block.schoolID]
+                
+                # testataan tietotyypin muuttumista, hylkäysperiaate 3
+                if oldDistr.break_contiguity(block) == False:
                     
-                    # testataan hylkäysperiaate 2
-                    if self.is_too_far(block) == False:
                         
-                        # haetaan muuttujaan blockin districti
-                        oldDistr = districts[block.schoolID]
+                    old_newZ = (old_otherSum - block.langOther) / (old_otherSum - block.langOther + old_fiSveSum - block.langFiSve)
+                    old_currentZ = (old_otherSum) / (old_otherSum + old_fiSveSum)
+                    
+
+                    # testataan onko uusi parempi kuin tämänhetkinen self -z-arvo
+                    
+                    # kun bestBlock on tyhjä, verrataan alueen self.zvalueen
+                    if bestBlock == None:       
+                    
+                        newZ_1 = (otherSum + block.langOther) / (otherSum + block.langOther + fiSveSum + block.langFiSve)
+                            
+                        # jos vanhan distrin uusi z-arvo on pienempi tai yhtäsuuri kuin vanha tai vanhan distrin vanhan z-arvon ja uuden distrin vanhan z-arvon itseisarvonjen erotus on suurempi kuin vastaava uusilla
+                        if (((old_newZ - globalMean) / globalStDev) <= ((old_currentZ - globalMean) / globalStDev)) or abs(((old_currentZ - globalMean) / globalStDev) - ((self.zvalue - globalMean) / globalStDev)) > abs(((old_newZ - globalMean) / globalStDev) - ((newZ_1 - globalMean) / globalStDev)):
+                                
+                            if abs((newZ_1 - globalMean) / globalStDev) < abs((self.zvalue - globalMean) / globalStDev):
+                                
+                                bestBlock = block
+                                #return block
+                            
+                    else:
                         
-                        if self.break_areaDiam(block):
+                        newZ_2 = (otherSum + block.langOther) / (otherSum + block.langOther + fiSveSum + block.langFiSve)
+                        current_best = (otherSum + bestBlock.langOther) / (otherSum + bestBlock.langOther + fiSveSum + bestBlock.langFiSve)
                         
-                            # testataan tietotyypin muuttumista, hylkäysperiaate 3
-                            if oldDistr.break_contiguity(block) == False:
+                        # jos vanhan distrin uusi z-arvo on pienempi tai yhtäsuuri kuin vanha tai vanhan distrin vanhan z-arvon ja uuden distrin vanhan z-arvon itseisarvonjen erotus on suurempi kuin vastaava uusilla
+                        if (((old_newZ - globalMean) / globalStDev) <= ((old_currentZ - globalMean) / globalStDev)) or abs(((old_currentZ - globalMean) / globalStDev) - ((self.zvalue - globalMean) / globalStDev)) > abs(((old_newZ - globalMean) / globalStDev) - ((newZ_2 - globalMean) / globalStDev)):
+                        
+                            if abs((newZ_2 - globalMean) / globalStDev) < abs((current_best - globalMean) / globalStDev):
                                 
-                                old_fiSveSum = 0
-                                old_otherSum= 0
+                                bestBlock = block 
                                 
-                                for key, value in oldDistr.blocks.items():
-                                    
-                                    old_fiSveSum += value.langFiSve
-                                    old_otherSum += value.langOther
-                                    
-                                old_newZ = (old_otherSum - block.langOther) / (old_otherSum - block.langOther + old_fiSveSum - block.langFiSve)
-                                old_currentZ = (old_otherSum) / (old_otherSum + old_fiSveSum)
-                                
-        
-                                # testataan onko uusi parempi kuin tämänhetkinen self -z-arvo
-                                
-                                # kun bestBlock on tyhjä, verrataan alueen self.zvalueen
-                                if bestBlock == None:       
-                                
-                                    newZ_1 = (otherSum + block.langOther) / (otherSum + block.langOther + fiSveSum + block.langFiSve)
-                                        
-                                    # jos vanhan distrin uusi z-arvo on pienempi tai yhtäsuuri kuin vanha tai vanhan distrin vanhan z-arvon ja uuden distrin vanhan z-arvon itseisarvonjen erotus on suurempi kuin vastaava uusilla
-                                    if (((old_newZ - globalMean) / globalStDev) <= ((old_currentZ - globalMean) / globalStDev)) or abs(((old_currentZ - globalMean) / globalStDev) - ((self.zvalue - globalMean) / globalStDev)) > abs(((old_newZ - globalMean) / globalStDev) - ((newZ_1 - globalMean) / globalStDev)):
-                                            
-                                        if abs((newZ_1 - globalMean) / globalStDev) < abs((self.zvalue - globalMean) / globalStDev):
-                                            
-                                            bestBlock = block
-                                            #return block
-                                        
-                                else:
-                                    
-                                    newZ_2 = (otherSum + block.langOther) / (otherSum + block.langOther + fiSveSum + block.langFiSve)
-                                    current_best = (otherSum + bestBlock.langOther) / (otherSum + bestBlock.langOther + fiSveSum + bestBlock.langFiSve)
-                                    
-                                    # jos vanhan distrin uusi z-arvo on pienempi tai yhtäsuuri kuin vanha tai vanhan distrin vanhan z-arvon ja uuden distrin vanhan z-arvon itseisarvonjen erotus on suurempi kuin vastaava uusilla
-                                    if (((old_newZ - globalMean) / globalStDev) <= ((old_currentZ - globalMean) / globalStDev)) or abs(((old_currentZ - globalMean) / globalStDev) - ((self.zvalue - globalMean) / globalStDev)) > abs(((old_newZ - globalMean) / globalStDev) - ((newZ_2 - globalMean) / globalStDev)):
-                                    
-                                        if abs((newZ_2 - globalMean) / globalStDev) < abs((current_best - globalMean) / globalStDev):
-                                            
-                                            bestBlock = block 
-                                    
         return bestBlock
     
                                 
@@ -330,7 +369,7 @@ class SchoolDistr:
                     # testataan hylkäysperiaate 2
                     if self.is_too_far(block) == False:
                         
-                        if self.break_areaDiam(block):
+                        if self.break_areaCirc(block):
                         
                             # haetaan muuttujaan blockin districti
                             oldDistr = districts[block.schoolID]
@@ -400,7 +439,7 @@ class Block:
 # 
 
 # miksi vain 75:sää ruudussa on koulu, vaikka kouluja on 77? 
-# make some kind of a check for polygon diameter / area, to make shapes less weird 
+# make some kind of a check for polygon circumference / area, to make shapes less weird 
 
 # share the execution to multiple processors
 
