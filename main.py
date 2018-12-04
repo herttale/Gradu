@@ -101,7 +101,7 @@ currentbestCurve = None
 
 
 
-for iteration in range(0,10):
+for iteration in range(0,20):
     
 
     districts = deepcopy(districts_orig)
@@ -116,8 +116,8 @@ for iteration in range(0,10):
     subiteration = 0
     divider = 5
     
-    # set the ceil value for probability calculation
-    ceil = 0.5 * iteration * 10
+    # set the ceil value for probability calculation (now it ranges from 50 to 126 adding 4 at every iteration)
+    ceil = 0.4 * iteration * 10 + 50
     
     # lasketaan globaali muunkielisten osuuden keskiarvo ja keskihajonta alueilla
     
