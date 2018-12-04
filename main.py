@@ -16,7 +16,8 @@ from classes import Block
 from classes import SchoolDistr
 import matplotlib.pyplot as plt 
 import imageio
-import glob   
+import glob
+from copy import deepcopy
 
 rttk = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/wrangled_rttk_withoutmulti.shp", encoding = "UTF-8")
 schools = gpd.read_file("/home/hertta/Documents/Gradu/oppilasalueet2018/koulut_euref_ykr_NEW.shp", encoding = "UTF-8")
@@ -43,8 +44,8 @@ rttk_grouped = rttk.groupby(by = 'id')
 
 ######### build blocks, districts and separate dict of blocks
 
-districts = {}
-blocks_dict = {}
+districts_orig = {}
+blocks_dict_orig = {}
 
 
 for key, row in schools.iterrows():
@@ -80,20 +81,11 @@ for key, row in schools.iterrows():
         if block.ykrId == ykrid: 
             block.containsSchool = True
         blocks[row['YKR_ID']] = block
-        blocks_dict[row['YKR_ID']] = block
+        blocks_dict_orig[row['YKR_ID']] = block
     
     # now create district and add it to dict "districts"
     distr = SchoolDistr(row_schoolID, blocks, ttdict)
-    distr.calculate_geometry()
-    distr.calculate_area_diameter()
-    distr.calculate_min_area_diameter()
-    distr.meanttime = distr.calculate_meanttime()
-    distr.maxttime = distr.calculate_maxttime()
-    distr.calculate_studentbase()
-    distr.calculate_zvalue()
-    distr.calculate_studentlimit()
-    districts[row_schoolID] = distr
-    
+    districts_orig[row_schoolID] = distr
 
     
 ################# Data is ready  
@@ -102,177 +94,208 @@ for key, row in schools.iterrows():
 # globaalia optimia). Seurataan Z-arvojen muutosta myös kirjaamalla ne aina listaan iteraation lopussa. Looppi pidetään käynnissä kiinteän määrän kertoja (esim. 20-100))
 #Upper_Zfactor = []
 #Upper_iteration = 0
-#
-#while True:
+    
+currentbestZ = None
+currentbestDistr = None
+currentbestCurve = None
+
+
+
+for iteration in range(0,10):
+    
+
+    districts = deepcopy(districts_orig)
+    blocks_dict = deepcopy(blocks_dict_orig)
+    
+
+    # luodaan lista Zfactor, joka seuraa sdDictin z-arvojen muutosta.
+    Zfactor = []
+    
+    # luodaan kierroksia laskeva muuttuja. Sitä käytetään mm. määrittämään, milloin Zfactorin kehitystä aletaan tarkkailla ja suoritus voidaan pysäyttää.
+    mainiteration = 0
+    subiteration = 0
+    divider = 5
+    
+    # set the ceil value for probability calculation
+    ceil = 0.5 * iteration * 10
+    
+    # lasketaan globaali muunkielisten osuuden keskiarvo ja keskihajonta alueilla
+    
+    stdev_list = []
+    
+    for key, item in districts.items():
+        stdev_list.append(item.zvalue)
+    
+    # keskiarvo
+    globalMean = sum(stdev_list)/len(districts)
+    
+    # keskihajonta
+    globalStDev = np.std(stdev_list, ddof = 0)
     
     
-    
-    
-
-# luodaan lista Zfactor, joka seuraa sdDictin z-arvojen muutosta.
-Zfactor = []
-
-# luodaan kierroksia laskeva muuttuja. Sitä käytetään mm. määrittämään, milloin Zfactorin kehitystä aletaan tarkkailla ja suoritus voidaan pysäyttää.
-mainiteration = 0
-subiteration = 0
-divider = 5
-
-# alustetaan todennäköisyyshomman kattoarvo
-ceil = 50
-
-# lasketaan globaali muunkielisten osuuden keskiarvo ja keskihajonta alueilla
-
-stdev_list = []
-
-for key, item in districts.items():
-    stdev_list.append(item.zvalue)
-
-# keskiarvo
-globalMean = sum(stdev_list)/len(districts)
-
-# keskihajonta
-globalStDev = np.std(stdev_list, ddof = 0)
-
-
-#plottaa & tallenna alkutila
-fp = "/home/hertta/Documents/Gradu/kuvia/gif2/iter_" + str(subiteration) + ".png" 
-
-resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
-for key, item in districts.items():
-    resultframe = resultframe.append({'key': key, 'geometry' : item.geometry, 'zvalue' : (item.zvalue-globalMean)/ globalStDev}, ignore_index=True)
-
-
-f, ax = plt.subplots(1)
-ax = resultframe.plot(ax=ax, column = 'zvalue',cmap = 'plasma', edgecolor='black', lw=0.7, vmin = -1.64188227253489, vmax = 3.74364273153602, legend = True)
-ax.set_axis_off()
-plt.savefig(fp, dpi=200)
-plt.close()
- 
-# Iteroidan sdDictiä kunnes iteration on vähintään raja-arvo ja Zfactor ei enää muutu juurikaan pienemmäksi, jolloin palautetaan viimeinen tilanne ja break
-while True:
-    
-    
-    # calculate and append Zfactor, with sums of district's z-values' absolute values 
-#    Zlist = []
-    Z = 0
-    
-    for key, value in districts.items():
-        Z += abs((value.zvalue-globalMean)/ globalStDev)
-#    for key, item in districts.items():
-#        Zlist.append(item.zvalue)
-#        
-#    Z = np.std(stdev_list, ddof = 0)
-    
-    Zfactor.append(Z)
-    
-    
-    # test for breaking
-    if mainiteration >= 12: # huom, testaaminen voi alkaa vasta kun todennäköisyys valita random on ollut 0 jo muutamia kierroksia
-         
-        checkvalue = st.mean([Zfactor[mainiteration], Zfactor[mainiteration-1], Zfactor[mainiteration-2], Zfactor[mainiteration-3]]) - Zfactor[mainiteration]
+    ##plottaa & tallenna alkutila
+    #fp = "/home/hertta/Documents/Gradu/kuvia/gif3/iter_" + str(subiteration) + ".png" 
+    #
+    #resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
+    #for key, item in districts.items():
+    #    resultframe = resultframe.append({'key': key, 'geometry' : item.geometry, 'zvalue' : (item.zvalue-globalMean)/ globalStDev}, ignore_index=True)
+    #
+    #
+    #f, ax = plt.subplots(1)
+    #ax = resultframe.plot(ax=ax, column = 'zvalue',cmap = 'plasma', edgecolor='black', lw=0.7, vmin = -1.64188227253489, vmax = 3.74364273153602, legend = True)
+    #ax.set_axis_off()
+    #plt.savefig(fp, dpi=200)
+    #plt.close()
+     
+    # Iteroidan sdDictiä kunnes iteration on vähintään raja-arvo ja Zfactor ei enää muutu juurikaan pienemmäksi, jolloin palautetaan viimeinen tilanne ja break
+    while True:
         
-        if round(checkvalue, 5) == 0:
+        
+        # calculate and append Zfactor, with sums of district's z-values' absolute values 
+        # Zlist = []
+        Z = 0
+        
+        for key, value in districts.items():
+            Z += abs((value.zvalue-globalMean)/ globalStDev)
+    #    for key, item in districts.items():
+    #        Zlist.append(item.zvalue)
+    #        
+    #    Z = np.std(stdev_list, ddof = 0)
+        
+        Zfactor.append(Z)
+        
+        
+        # test for breaking
+        if mainiteration >= 12: # huom, testaaminen voi alkaa vasta kun todennäköisyys valita random on ollut 0 jo muutamia kierroksia
+             
+            checkvalue = st.mean([Zfactor[mainiteration], Zfactor[mainiteration-1], Zfactor[mainiteration-2], Zfactor[mainiteration-3]]) - Zfactor[mainiteration]
             
-            # muutetaan break_cond Trueksi
-            # myöhemmin tässä palautetaan, kun tehty funktioksi, nyt breakataan ulommassa loopissa (2. while)
-            break    
-
-               
-    #increase iteration
-    mainiteration += 1
-    print("mainiteration round:", mainiteration, ', current zvalue:', Z)
-    
-    
-    
-    #Iteroidaan kaikki districtit
-    for key in list(districts.keys()):
-        
-        
-        subiteration += 1
-        
-        if subiteration % divider == 0:
-            
-            if subiteration < 10:
-                itertext = '000'+ str(subiteration)
-            elif subiteration < 100:
-                itertext = '00'+ str(subiteration)
-            elif subiteration < 1000:
-                itertext = '0'+ str(subiteration)
-            else: 
-                itertext = str(subiteration)
+            if round(checkvalue, 5) == 0 or mainiteration > 40:
                 
-            #plottaa & tallenna
-            fp = "/home/hertta/Documents/Gradu/kuvia/gif2/iter_" + itertext + ".png" 
-            
-            resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
-            for key, item in districts.items():
-                resultframe = resultframe.append({'key': key, 'geometry' : item.geometry, 'zvalue' : (item.zvalue-globalMean)/ globalStDev}, ignore_index=True)
-            
-            
-            f, ax = plt.subplots(1)
-            ax = resultframe.plot(ax=ax, column = 'zvalue',cmap = 'plasma', edgecolor='black', lw=0.7, vmin = -1.64188227253489, vmax = 3.74364273153602, legend = True)
-            ax.set_axis_off()
-            plt.savefig(fp, dpi=200)
-            plt.close()
-            
-        
-        # arvo todennäköisyysluku, jos ceil on suurempi kuin 50, muuten randomint = 0 ja valitaan aina paras
-        if ceil >= 50:
-            
-            randomint = random.randint(0, ceil)
-            
-        else:
-            
-            randomint = 0
-            
-        # check what distr touches
-        blist = districts[key].touches_which(blocks_dict)
-        
-        # select best or random block based on randomint
-        if randomint > 50:
-            
-            block_toadd = districts[key].select_random_block(blist, districts)
-            
-        else:
-            
-            block_toadd = districts[key].select_best_block(blist, districts, globalMean, globalStDev)
-        
-        
-        ## FIXME koita tässä muuttaa mainin sisällä block_toadd'in vastaavaan alkuperäiseen blockiin!!! schoolID ja samalla schoolID myös blocks_dictin instansseihin jne! 
-        ## tai sitten poista block_toadd muuttujaan julistaminen välistä!!!
-
-        # tässä päivitetään myös blocks_dictiin tieto blockin uudesta disrtictistä, joka dictin ainoa muuttuva tieto
-
-
-        if block_toadd != None: # tämän myötä tyhjän lisäämistä / poistamista ei tarvitse käsitellä luokkametodissa
-           
-            # remove block from districts[block.SchoolID]
-            districts[block_toadd.schoolID].remove_block(block_toadd)
-        
-            blocks_dict[block_toadd.ykrId].schoolID = key
-            block_toadd.schoolID = key
-        
-            # add block to original districts -dict
-            districts[key].add_block(block_toadd)
-        
-        
-#        l = []
-#        for k, item in districts[key].blocks.items(): 
-#            l.append(item.schoolID)
-#            
-#        print(set(l))
-#        print('\n')
+                # muutetaan break_cond Trueksi
+                # myöhemmin tässä palautetaan, kun tehty funktioksi, nyt breakataan ulommassa loopissa (2. while)
+                break    
     
-    # joka iteraatiokierroksen lopussa ceiliä vähennetään 
-    ceil -= 10
-    divider += 5
+                   
+        #increase iteration
+        mainiteration += 1
+        print("mainiteration round:", mainiteration, ', current zvalue:', Z)
+        
+        
+       
+        #Iteroidaan kaikki districtit
+        for key in list(districts.keys()):
+            
+            
+            subiteration += 1
+    
+    # plotataan kuva         
+    
+    #        if subiteration % divider == 0:
+    #            
+    #            if subiteration < 10:
+    #                itertext = '000'+ str(subiteration)
+    #            elif subiteration < 100:
+    #                itertext = '00'+ str(subiteration)
+    #            elif subiteration < 1000:
+    #                itertext = '0'+ str(subiteration)
+    #            else: 
+    #                itertext = str(subiteration)
+    #                
+    #            #plottaa & tallenna
+    #            fp = "/home/hertta/Documents/Gradu/kuvia/gif3/iter_" + itertext + ".png" 
+    #            
+    #            resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
+    #            for key, item in districts.items():
+    #                resultframe = resultframe.append({'key': key, 'geometry' : item.geometry, 'zvalue' : (item.zvalue-globalMean)/ globalStDev}, ignore_index=True)
+    #            
+    #            
+    #            f, ax = plt.subplots(1)
+    #            ax = resultframe.plot(ax=ax, column = 'zvalue',cmap = 'plasma', edgecolor='black', lw=0.7, vmin = -1.64188227253489, vmax = 3.74364273153602, legend = True)
+    #            ax.set_axis_off()
+    #            plt.savefig(fp, dpi=200)
+    #            plt.close()
+                
+            
+            # arvo todennäköisyysluku, jos ceil on suurempi kuin 50, muuten randomint = 0 ja valitaan aina paras
+            if ceil >= 50:
+                
+                randomint = random.randint(0, ceil)
+                
+            else:
+                
+                randomint = 0
+                
+            # check what distr touches
+            blist = districts[key].touches_which(blocks_dict)
+            
+            # select best or random block based on randomint
+            if randomint > 50:
+                
+                block_toadd = districts[key].select_random_block(blist, districts)
+                
+            else:
+                
+                block_toadd = districts[key].select_best_block(blist, districts, globalMean, globalStDev)
+            
+            
+            ## FIXME koita tässä muuttaa mainin sisällä block_toadd'in vastaavaan alkuperäiseen blockiin!!! schoolID ja samalla schoolID myös blocks_dictin instansseihin jne! 
+            ## tai sitten poista block_toadd muuttujaan julistaminen välistä!!!
+    
+            # tässä päivitetään myös blocks_dictiin tieto blockin uudesta disrtictistä, joka dictin ainoa muuttuva tieto
+    
+    
+            if block_toadd != None: # tämän myötä tyhjän lisäämistä / poistamista ei tarvitse käsitellä luokkametodissa
+               
+                # remove block from districts[block.SchoolID]
+                districts[block_toadd.schoolID].remove_block(block_toadd)
+                districts[block_toadd.schoolID].update_distr()
+                
+                blocks_dict[block_toadd.ykrId].schoolID = key
+                block_toadd.schoolID = key
+            
+                # add block to original districts -dict
+                districts[key].add_block(block_toadd)
+                districts[key].update_distr()
+            
+    #        l = []
+    #        for k, item in districts[key].blocks.items(): 
+    #            l.append(item.schoolID)
+    #            
+    #        print(set(l))
+    #        print('\n')
+        
+        # joka iteraatiokierroksen lopussa ceiliä vähennetään 
+        ceil -= 5
+        divider += 5
+
+    if currentbestZ == None:
+        
+        currentbestZ = Z
+        currentbestDistr = districts
+        currentbestCurve = Zfactor
+
+    elif Z < currentbestZ:
+        
+        currentbestZ = Z
+        currentbestDistr = districts        
+        currentbestCurve = Zfactor
+
+
+
+
+
+
+
+
+
 
 
 
 
 stdev_list2 = []
 
-for key, item in districts.items():
+for key, item in currentbestDistr.items():
     stdev_list.append(item.zvalue)
 
 # keskiarvo
@@ -287,11 +310,11 @@ globalStDev2 = np.std(stdev_list, ddof = 0)
 
 
 zlist = []
-plt.plot(Zfactor)
-plt.savefig("/home/hertta/Documents/Gradu/kuvia/zkayra.png", dpi=300)
+plt.plot(currentbestCurve)
+plt.savefig("/home/hertta/Documents/Gradu/kuvia/zkayra1.png", dpi=300)
     
 resultframe = gpd.GeoDataFrame(columns= ['key', 'geometry', 'zvalue'], geometry = "geometry")
-for key, item in districts.items():
+for key, item in currentbestDistr.items():
     resultframe = resultframe.append({'key': key, 'geometry' : item.geometry, 'zvalue' : (item.zvalue-globalMean)/ globalStDev}, ignore_index=True)
     #print(key, (item.zvalue-globalMean)/ globalStDev)
     zlist.append(item.zvalue)
@@ -302,7 +325,7 @@ f, ax = plt.subplots(1)
 ax = resultframe.plot(ax=ax, column = 'zvalue',cmap = 'plasma', edgecolor='black', lw=0.7, vmin = -1.64188227253489, vmax = 3.74364273153602, legend = True)
 ax.set_axis_off()
 #plt.show()
-plt.savefig("/home/hertta/Documents/Gradu/kuvia/gif2/iter_final.png", dpi = 200)
+plt.savefig("/home/hertta/Documents/Gradu/kuvia/gif2/iter_final1.png", dpi = 200)
 
 
 
